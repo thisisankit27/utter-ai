@@ -32,6 +32,8 @@ ffmpeg -y -loglevel error -f lavfi -i "color=c=black:s=320x240:d=32" -i "$OUT/ba
 
 # a deliberately corrupt file
 head -c 4096 /dev/urandom > "$OUT/broken.mp3"
+# pure digital silence — Whisper should find no speech in this
+ffmpeg -y -loglevel error -f lavfi -i "anullsrc=r=16000:cl=mono" -t 3 "$OUT/silence.wav"
 # a video with no audio track
 ffmpeg -y -loglevel error -f lavfi -i "color=c=white:s=160x120:d=4" -c:v libx264 -pix_fmt yuv420p "$OUT/silent.mp4"
 
