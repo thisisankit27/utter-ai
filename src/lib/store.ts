@@ -126,6 +126,8 @@ export const useStore = create<AppStore>((set, get) => ({
         ready: true,
       });
       get().applyTheme();
+      const autoload = await api.e2eAutoload().catch(() => null);
+      if (autoload) get().loadMedia(autoload);
     } catch (e) {
       set({ ready: true });
       get().showError(e);

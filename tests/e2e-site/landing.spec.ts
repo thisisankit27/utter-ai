@@ -14,8 +14,11 @@ test("renders, no console errors, no horizontal overflow", async ({ page }) => {
   );
   expect(overflow, "no horizontal scroll").toBeLessThanOrEqual(1);
 
-  // GitHub API calls are allowed to fail offline; ignore those.
-  expect(errors.filter((e) => !/api\.github\.com|Failed to fetch|downloads\.json/.test(e))).toEqual([]);
+  // The GitHub API calls (counter, asset links) 404 before the first release
+  // and 403 when rate-limited — both are handled gracefully in app.js.
+  const ignorable =
+    /api\.github\.com|Failed to fetch|downloads\.json|status of (403|404|429)/;
+  expect(errors.filter((e) => !ignorable.test(e))).toEqual([]);
 });
 
 test("primary navigation and anchors work", async ({ page }) => {

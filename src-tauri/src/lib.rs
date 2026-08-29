@@ -460,6 +460,17 @@ fn cancel_transcription(state: State<AppState>, job_id: String) {
     }
 }
 
+/// Test hook: when `UTTERAI_E2E=1`, returns the path in `UTTERAI_E2E_FILE` so the
+/// end-to-end suite can load media without driving the native file dialog.
+#[tauri::command]
+fn e2e_autoload() -> Option<String> {
+    if std::env::var("UTTERAI_E2E").as_deref() == Ok("1") {
+        std::env::var("UTTERAI_E2E_FILE").ok()
+    } else {
+        None
+    }
+}
+
 #[tauri::command]
 fn export_transcript(
     transcript: Transcript,
@@ -569,6 +580,7 @@ pub fn run() {
             verify_model,
             start_transcription,
             cancel_transcription,
+            e2e_autoload,
             export_transcript,
             render_export,
             get_history,
