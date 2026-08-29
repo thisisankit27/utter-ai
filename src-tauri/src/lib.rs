@@ -382,6 +382,57 @@ fn default_note(stage: &str) -> &'static str {
     }
 }
 
+#[cfg(test)]
+mod progress_tests {
+    use super::*;
+    use utterai_core::transcribe::Segment;
+
+    #[test]
+    fn overall_progress_is_monotonic_and_bounded() {
+        let mut pm = ProgressModel::default();
+        let mut last = 0.0_f32;
+        let steps = [
+            TranscribeEvent::Stage { stage: Stage::Preparing, note: String::new() },
+            TranscribeEvent::Stage { stage: Stage::Extracting, note: String::new() },
+            TranscribeEvent::ExtractProgress { fraction: 0.5 },
+            TranscribeEvent::ExtractProgress { fraction: 1.0 },
+            TranscribeEvent::Stage { stage: Stage::LoadingModel, note: String::new() },
+            TranscribeEvent::TranscribeProgress { fraction: 0.1 },
+            TranscribeEvent::TranscribeProgress { fraction: 0.9 },
+            TranscribeEvent::Stage { stage: Stage::Finalizing, note: String::new() },
+        ];
+        for ev in steps {
+            let (overall, _stage, note, _p) = pm.apply(ev);
+            assert!((0.0..=1.0).contains(&overall));
+            assert!(overall + 1e-6 >= last, "progress went backwards: {last} -> {overall}");
+            assert!(!note.is_empty());
+            last = overall;
+        }
+        assert!(last >= 0.97);
+    }
+
+    #[test]
+    fn partial_segment_is_forwarded_and_marks_transcribing() {
+        let mut pm = ProgressModel::default();
+        let seg = Segment { start: 1.0, end: 2.0, text: "hello".into() };
+        let (_, stage, _, partial) =
+            pm.apply(TranscribeEvent::PartialSegment { segment: seg.clone() });
+        assert_eq!(stage, "transcribing");
+        assert_eq!(partial, Some(seg));
+    }
+
+    #[test]
+    fn stage_note_overrides_default() {
+        let mut pm = ProgressModel::default();
+        let (_, stage, note, _) = pm.apply(TranscribeEvent::Stage {
+            stage: Stage::Extracting,
+            note: "Preparing the audio".into(),
+        });
+        assert_eq!(stage, "extracting");
+        assert_eq!(note, "Preparing the audio");
+    }
+}
+
 #[tauri::command]
 fn cancel_transcription(state: State<AppState>, job_id: String) {
     if let Some(c) = state.jobs.lock().get(&job_id) {
