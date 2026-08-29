@@ -24,16 +24,21 @@ already contains the domain, so the Pages deploy keeps it set.
 ## Releases
 
 Tag `vX.Y.Z` on `master` → `.github/workflows/release.yml` builds Windows
-(`.exe`, `.msi`) and Linux (`.AppImage`, `.deb`) via `tauri-apps/tauri-action`
-and publishes a GitHub Release with the artifacts and `checksums.txt`.
+(`.exe`, `.msi`) and Linux (`.AppImage`, `.deb`) via `tauri-apps/tauri-action`,
+signs the updater artifacts, and publishes a GitHub Release with the installers,
+`checksums.txt` and `latest.json`.
 
 ```bash
-# bump versions in Cargo.toml, src-tauri/tauri.conf.json, package.json
-git tag v1.0.0
-git push origin v1.0.0
+# 1. bump the version in Cargo.toml, src-tauri/tauri.conf.json, package.json
+# 2. add a section to CHANGELOG.md
+# 3. commit, then:
+git tag -a vX.Y.Z -m "UtterAI vX.Y.Z — <headline>"
+git push origin vX.Y.Z
 ```
 
-`workflow_dispatch` also works with a `tag` input for re-runs.
+`workflow_dispatch` also works with a `tag` input for re-runs. After the release
+publishes, flesh out its body from `CHANGELOG.md` if the auto-generated stub
+isn't enough.
 
 ### Updater signing key (one-time)
 

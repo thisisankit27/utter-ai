@@ -1,0 +1,65 @@
+name: Bug report
+description: Something in UtterAI isn't working right
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. UtterAI processes everything locally, so please
+        don't attach your actual recordings — a short description of the audio
+        (length, format, language) is enough.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you do, and what did UtterAI do instead of what you expected?
+      placeholder: I selected a 12-minute .m4a, pressed Start, and the progress bar stuck at 15%…
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: UtterAI version
+      description: Settings → the version at the bottom, or the installer filename.
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - Ubuntu / Debian (.deb)
+        - Other Linux (AppImage)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: media
+    attributes:
+      label: The media
+      description: Format, rough length, language, audio vs video.
+      placeholder: "45-minute MP3, English, mono"
+  - type: dropdown
+    id: model
+    attributes:
+      label: Model
+      options: [Base (built in), Small, Medium, Large (Turbo)]
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log detail (optional)
+      description: >
+        Turn on Settings → Advanced → Developer mode, reproduce the problem, and
+        paste the error detail here. Logs live in your app-log directory (the
+        path is shown in Settings → Privacy & storage). Please skip any lines
+        with file paths you'd rather not share.
+      render: text

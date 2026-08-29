@@ -3,6 +3,17 @@
 Thanks for taking a look. UtterAI is a small, focused desktop app; contributions
 that keep it that way are very welcome.
 
+By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md). For
+security issues, **don't** open a public issue — see [SECURITY.md](SECURITY.md).
+
+## Filing an issue
+
+Use the [bug report or feature request templates][new-issue]. For bugs, include
+your UtterAI version, OS, and a description of the media (length, format,
+language) — please don't attach real recordings.
+
+[new-issue]: https://github.com/thisisankit27/utter-ai/issues/new/choose
+
 ## Repository layout
 
 | Path | What it is |
@@ -12,7 +23,7 @@ that keep it that way are very welcome.
 | `src` | React + TypeScript + Tailwind front end. |
 | `site` | The static landing page deployed to GitHub Pages. |
 | `scripts` | Build container, sidecar fetch, icon + fixture generation. |
-| `tests` | WebdriverIO end-to-end walkthrough. |
+| `tests` | Playwright (mock app + landing page) and a WebdriverIO + tauri-driver walkthrough of the packaged binary. |
 
 ## Prerequisites
 
@@ -48,6 +59,7 @@ cargo fmt --all
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 npm run typecheck && npm run lint && npm run build
+npx playwright test
 ```
 
 - Keep engine logic in `utterai-core` with unit tests. The Tauri layer should

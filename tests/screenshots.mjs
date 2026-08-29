@@ -90,9 +90,17 @@ const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 await page.setContent(`
   <div style="width:1200px;height:630px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:#0c0d10;color:#e9eaee;font-family:system-ui">
     <div style="display:flex;align-items:center;gap:16px">
-      <div style="width:56px;height:56px;border-radius:16px;background:#5b54e8;display:flex;align-items:center;justify-content:center">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 11v2"/></svg>
-      </div>
+      <svg width="56" height="56" viewBox="0 0 24 24">
+        <defs><linearGradient id="i" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#807BFF"/><stop offset="1" stop-color="#635BF0"/></linearGradient></defs>
+        <rect width="24" height="24" rx="5.6" fill="url(#i)"/>
+        <g fill="#fff">
+          <rect x="3.6" y="8.4" width="2.2" height="7.2" rx="1.1"/>
+          <rect x="7.35" y="5.28" width="2.2" height="13.44" rx="1.1"/>
+          <rect x="11.1" y="2.16" width="2.2" height="19.68" rx="1.1"/>
+          <rect x="14.85" y="6.24" width="2.2" height="11.52" rx="1.1"/>
+          <rect x="18.6" y="9.12" width="2.2" height="5.76" rx="1.1"/>
+        </g>
+      </svg>
       <span style="font-size:52px;font-weight:700;letter-spacing:-.02em">UtterAI</span>
     </div>
     <p style="font-size:30px;color:#9194a0;margin:0">Private, local audio &amp; video transcription</p>

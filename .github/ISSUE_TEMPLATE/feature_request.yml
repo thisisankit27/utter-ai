@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest an improvement to UtterAI
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        UtterAI aims to stay small and focused — a great tool for turning
+        recordings into text, not a media suite. Requests that fit that scope
+        are the most likely to land.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that UtterAI makes hard or impossible today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you'd like
+      description: How would you want it to work? Sketches or examples welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
