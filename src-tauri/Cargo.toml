@@ -32,7 +32,7 @@ tracing = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 parking_lot = "0.12"
-dirs = "5"
+dirs = "6"
 
 [features]
 # these features are used for production builds or when a dev server is not specified, DO NOT REMOVE!!
