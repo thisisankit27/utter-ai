@@ -392,19 +392,34 @@ mod progress_tests {
         let mut pm = ProgressModel::default();
         let mut last = 0.0_f32;
         let steps = [
-            TranscribeEvent::Stage { stage: Stage::Preparing, note: String::new() },
-            TranscribeEvent::Stage { stage: Stage::Extracting, note: String::new() },
+            TranscribeEvent::Stage {
+                stage: Stage::Preparing,
+                note: String::new(),
+            },
+            TranscribeEvent::Stage {
+                stage: Stage::Extracting,
+                note: String::new(),
+            },
             TranscribeEvent::ExtractProgress { fraction: 0.5 },
             TranscribeEvent::ExtractProgress { fraction: 1.0 },
-            TranscribeEvent::Stage { stage: Stage::LoadingModel, note: String::new() },
+            TranscribeEvent::Stage {
+                stage: Stage::LoadingModel,
+                note: String::new(),
+            },
             TranscribeEvent::TranscribeProgress { fraction: 0.1 },
             TranscribeEvent::TranscribeProgress { fraction: 0.9 },
-            TranscribeEvent::Stage { stage: Stage::Finalizing, note: String::new() },
+            TranscribeEvent::Stage {
+                stage: Stage::Finalizing,
+                note: String::new(),
+            },
         ];
         for ev in steps {
             let (overall, _stage, note, _p) = pm.apply(ev);
             assert!((0.0..=1.0).contains(&overall));
-            assert!(overall + 1e-6 >= last, "progress went backwards: {last} -> {overall}");
+            assert!(
+                overall + 1e-6 >= last,
+                "progress went backwards: {last} -> {overall}"
+            );
             assert!(!note.is_empty());
             last = overall;
         }
@@ -414,9 +429,14 @@ mod progress_tests {
     #[test]
     fn partial_segment_is_forwarded_and_marks_transcribing() {
         let mut pm = ProgressModel::default();
-        let seg = Segment { start: 1.0, end: 2.0, text: "hello".into() };
-        let (_, stage, _, partial) =
-            pm.apply(TranscribeEvent::PartialSegment { segment: seg.clone() });
+        let seg = Segment {
+            start: 1.0,
+            end: 2.0,
+            text: "hello".into(),
+        };
+        let (_, stage, _, partial) = pm.apply(TranscribeEvent::PartialSegment {
+            segment: seg.clone(),
+        });
         assert_eq!(stage, "transcribing");
         assert_eq!(partial, Some(seg));
     }
