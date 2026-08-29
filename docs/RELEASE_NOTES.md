@@ -1,5 +1,27 @@
 # Release notes
 
+## v1.1.0
+
+### New
+
+- **In-app updates.** When a new version ships, UtterAI notices on launch and
+  offers to update itself — download, verify, restart. No uninstall/reinstall.
+  - It's **opt-out**: a toggle in first-run onboarding and in Settings → Updates,
+    plus a manual "Check now" button and the current version.
+  - The check is a single signed-manifest fetch from the GitHub release; nothing
+    else is sent. See [PRIVACY.md](PRIVACY.md).
+  - Linux: the **AppImage** updates in place; `.deb` installs continue to update
+    through your package manager. Windows: the NSIS installer updates in place.
+- Shared logo mark across the app header, the startup screen and the site.
+
+### Notes
+
+- Updating from **v1.0.0 to v1.1.0 is a manual download** (1.0.0 predates the
+  updater). From 1.1.0 onward it's automatic.
+- Requires the repo secrets `TAURI_SIGNING_PRIVATE_KEY` and
+  `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` to be set for the release workflow to
+  produce a signed `latest.json`.
+
 ## v1.0.0 — first public release
 
 UtterAI is a local audio & video transcription app for Windows and Linux.

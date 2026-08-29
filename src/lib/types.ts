@@ -89,6 +89,16 @@ export interface Settings {
   developer_mode: boolean;
   onboarding_complete: boolean;
   follow_playback: boolean;
+  auto_update_check: boolean;
+}
+
+export interface UpdateInfo {
+  version: string;
+  currentVersion: string;
+  /** Release notes body, if the manifest carried one. */
+  notes: string;
+  /** ISO date the release was published, if known. */
+  date: string | null;
 }
 
 export interface HistoryEntry {

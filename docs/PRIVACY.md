@@ -21,6 +21,15 @@ the source.
    Settings. Models come from Hugging Face
    (`huggingface.co/ggerganov/whisper.cpp`). Each download is checked against a
    SHA-256 hash that is compiled into the app.
+2. **Checking for an update.** Once per launch, UtterAI fetches a small manifest
+   from `github.com/thisisankit27/utter-ai/releases/latest/download/latest.json`
+   to compare version numbers. The request carries nothing but the standard HTTP
+   headers your system sends with any download — no identifier, no usage data.
+   If a newer version exists and you choose to install it, the installer is
+   downloaded from the same GitHub release and its signature is verified against
+   a public key compiled into the app before anything is applied. **You can turn
+   this off** in Settings → Updates (or during first-run onboarding); when it's
+   off, UtterAI makes no update requests at all.
 
 That's the complete list. The core transcription path (`utterai-core`) makes no
 network calls at all — there is a test that asserts this.
@@ -36,7 +45,7 @@ visit the page, not from the application.
 | `<data>/UtterAI/models/` | Downloaded model files | Until you remove them in Settings |
 | `<data>/UtterAI/tmp/` | Audio extracted from the range you selected, as 16 kHz mono WAV | Deleted when the job finishes, when you cancel, and swept on next launch |
 | `<data>/UtterAI/history.json` | Metadata and text of recent transcripts (last 50), so you can reopen them | Until you clear history |
-| `<data>/UtterAI/settings.json` | Your preferences | — |
+| `<data>/UtterAI/settings.json` | Your preferences, including whether update checks are on | — |
 | `<log>/UtterAI/` | Application logs | Rolling daily files |
 
 `<data>` is your platform's app-data directory (e.g. `~/.local/share` on Linux,

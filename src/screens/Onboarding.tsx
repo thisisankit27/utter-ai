@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "@/lib/store";
-import { IconDownload, IconShield, IconWave } from "@/components/icons";
+import { Switch } from "@/components/ui";
+import { IconDownload, IconRefresh, IconShield, IconWave } from "@/components/icons";
 
 const SLIDES = [
   {
@@ -19,10 +20,17 @@ const SLIDES = [
     title: "Ready to go",
     body: "A compact transcription model is already built in, so you can start now. Want more accuracy? Download a larger model anytime from Settings.",
   },
+  {
+    icon: IconRefresh,
+    title: "Stays up to date",
+    body: "When a new version ships, UtterAI can update itself — no reinstall. The check only asks GitHub for a version number. You can switch it off here or in Settings.",
+    control: "auto_update_check" as const,
+  },
 ];
 
 export function Onboarding() {
   const update = useStore((s) => s.updateSettings);
+  const settings = useStore((s) => s.settings);
   const [i, setI] = useState(0);
   const last = i === SLIDES.length - 1;
   const S = SLIDES[i];
@@ -57,6 +65,16 @@ export function Onboarding() {
             <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-muted">
               {S.body}
             </p>
+            {S.control === "auto_update_check" && settings && (
+              <div className="mx-auto mt-5 flex w-fit items-center gap-2.5 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm">
+                <Switch
+                  label="Check for updates automatically"
+                  checked={settings.auto_update_check}
+                  onChange={(v) => update({ auto_update_check: v })}
+                />
+                <span>Check for updates automatically</span>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
 

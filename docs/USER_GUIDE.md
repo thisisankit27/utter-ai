@@ -81,6 +81,19 @@ Open **Settings → Transcription models**.
 Downloads resume if interrupted and are checked against a known hash. Set any
 installed model as the default, or remove ones you don't need.
 
+## Updates
+
+UtterAI checks for a new version once when it starts. If one is available, a bar
+appears under the header: **What's new** opens the release notes, **Update now**
+downloads and verifies it, and then **Restart now** applies it — you never
+reinstall.
+
+Don't want the check? Turn off **Settings → Updates → Check for updates
+automatically** (you're also asked during first-run setup). With it off, UtterAI
+never contacts the update server; you can still press **Check now** whenever you
+like. On Linux the AppImage updates itself; if you installed the `.deb`, update
+it through your package manager instead.
+
 ## Where files live
 
 Settings → **Privacy & storage** shows your data folder and can open it. It

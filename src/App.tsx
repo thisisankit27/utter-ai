@@ -10,6 +10,7 @@ import {
   IconSun,
 } from "@/components/icons";
 import { LogoMark } from "@/components/Logo";
+import { UpdateBanner } from "@/components/UpdateBanner";
 import { Intake } from "@/screens/Intake";
 import { Review } from "@/screens/Review";
 import { Working } from "@/screens/Working";
@@ -106,6 +107,8 @@ export default function App() {
           </Menu>
         </div>
       </header>
+
+      <UpdateBanner />
 
       {job && route !== "working" && (
         <button

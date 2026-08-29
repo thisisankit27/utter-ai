@@ -59,9 +59,15 @@ system `/usr/bin/ffmpeg`.
   `tests/no_network_in_core_path.rs`.
 - The transcription pipeline (`transcribe`, `audio`, `media`, `chunk`,
   `export`) has no HTTP dependency.
-- The desktop shell adds no network use of its own.
+- The desktop shell adds one optional outbound request: `tauri-plugin-updater`
+  fetches `releases/latest/download/latest.json` from GitHub once per launch to
+  compare versions. It runs in the Rust process (not the webview), is gated on
+  the `auto_update_check` setting, and every downloaded update is Ed25519-verified
+  against the public key in `tauri.conf.json` before it is applied. The signing
+  private key lives only in CI secrets.
 - CSP in `tauri.conf.json` restricts the webview to `'self'` + the asset
-  protocol; `connect-src` is `'self' ipc:` only.
+  protocol; `connect-src` is `'self' ipc:` only. The updater does not need a CSP
+  allowance because it never touches the webview.
 
 ## Logging
 
@@ -80,9 +86,11 @@ system `/usr/bin/ffmpeg`.
 
 ## Known limitations
 
-- Release binaries are **unsigned**. Windows SmartScreen and Linux desktops will
-  warn on first run. Builds are reproducible from a public workflow and every
-  artifact has a published checksum (`checksums.txt` on each release).
+- Release binaries are **unsigned** by an OS-recognised authority. Windows
+  SmartScreen and Linux desktops will warn on first run. Builds are reproducible
+  from a public workflow and every artifact has a published checksum
+  (`checksums.txt` on each release). Auto-update packages *are* signed (Ed25519)
+  and the app refuses any update that doesn't verify.
 - The Tauri NSIS installer has a known upstream issue where a sidecar can go
   stale across an in-place upgrade; the sidecar filename carries no version, and
   the installer replaces `bin/` contents — verified in the release smoke test.

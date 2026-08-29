@@ -76,22 +76,27 @@ function buildTranscript(name: string, dur: number, offset: number): Transcript 
 const settingsKey = "utterai-mock-settings";
 const historyKey = "utterai-mock-history";
 
+const DEFAULT_SETTINGS: Settings = {
+  default_model: "base",
+  default_language: "auto",
+  default_export_format: "txt",
+  theme: "system",
+  developer_mode: false,
+  onboarding_complete: true,
+  follow_playback: true,
+  auto_update_check: true,
+};
+
 function loadSettings(): Settings {
   try {
     const s = JSON.parse(localStorage.getItem(settingsKey) || "null");
-    if (s) return s;
+    // Merge over defaults so a stored blob from an older build still has every
+    // field (mirrors serde(default) on the Rust side).
+    if (s) return { ...DEFAULT_SETTINGS, ...s };
   } catch {
     /* ignore */
   }
-  return {
-    default_model: "base",
-    default_language: "auto",
-    default_export_format: "txt",
-    theme: "system",
-    developer_mode: false,
-    onboarding_complete: true,
-    follow_playback: true,
-  };
+  return { ...DEFAULT_SETTINGS };
 }
 function loadHistory(): HistoryEntry[] {
   try {
