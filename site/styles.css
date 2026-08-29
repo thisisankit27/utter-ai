@@ -276,6 +276,24 @@ header.nav.scrolled {
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
+.trust b.is-live::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--iris);
+  vertical-align: middle;
+  animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trust b.is-live::before { animation: none; }
+}
 
 /* ribbon */
 .ribbon {

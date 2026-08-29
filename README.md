@@ -142,6 +142,9 @@ npx playwright test                                               # mock app + l
 npm run test:e2e                                                  # packaged-app walkthrough (tauri-driver)
 ```
 
+For a full runtime pass on Windows, see
+[docs/TESTING_WINDOWS.md](docs/TESTING_WINDOWS.md).
+
 ## Privacy
 
 UtterAI makes three kinds of network request, all optional and none involving
