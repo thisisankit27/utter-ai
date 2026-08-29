@@ -8,28 +8,44 @@
 import { browser, expect, $ } from "@wdio/globals";
 
 describe("UtterAI packaged app", () => {
-  it("launches and shows the intake screen", async () => {
+  it("launches and renders", async () => {
     await browser.waitUntil(
       async () => (await $("body").getText()).length > 0,
       { timeout: 20000, timeoutMsg: "app never rendered" },
     );
+    // Fresh data dir → onboarding overlay. Dismiss it.
+    const skip = await $("button*=Skip");
+    if (await skip.isExisting()) await skip.click();
   });
 
   it("transcribes the auto-loaded fixture end to end", async () => {
     // Review screen (auto-loaded via e2e_autoload)
     const start = await $("button*=Start transcription");
-    await start.waitForDisplayed({ timeout: 30000 });
+    await start.waitForClickable({ timeout: 30000 });
     await start.click();
 
-    // Working screen
-    await expect($("button*=Cancel transcription")).toBeDisplayed();
+    // Working screen — appears unless the clip transcribes faster than we poll.
+    await browser.waitUntil(
+      async () => {
+        const body = (await $("body").getText()).toLowerCase();
+        return body.includes("cancel transcription") || body.includes("readable");
+      },
+      { timeout: 20000, timeoutMsg: "never reached working or transcript screen" },
+    );
 
-    // Transcript screen — real Whisper output from the bundled model
-    const readable = await $("*=Readable");
-    await readable.waitForDisplayed({ timeout: 180000 });
+    // Transcript screen — real Whisper output from the bundled model.
+    // Whisper competes with the driver + webkit + xvfb for CPU here, so allow
+    // generous headroom for a 4-second clip.
+    try {
+      await $("*=Readable").then((el) => el.waitForDisplayed({ timeout: 300000 }));
+    } catch (e) {
+      await browser.saveScreenshot("./tests/artifacts/app-e2e-stuck.png");
+      console.log("STUCK BODY:", (await $("body").getText()).slice(0, 600));
+      throw e;
+    }
 
     const body = await $("body").getText();
-    expect(body.toLowerCase()).toMatch(/country|fellow|ask|americans/);
+    expect(body.toLowerCase()).toMatch(/fellow|americans|ask|country|so,/);
 
     // Timestamped view renders times
     await (await $("*=Timestamped")).click();

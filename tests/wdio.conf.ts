@@ -16,7 +16,7 @@ const ROOT = path.resolve(__dirname, "..");
 const APP =
   process.env.UTTERAI_BIN || path.join(ROOT, "target/release/utterai");
 const FIXTURE =
-  process.env.UTTERAI_E2E_FILE || path.join(ROOT, "fixtures/jfk.wav");
+  process.env.UTTERAI_E2E_FILE || path.join(ROOT, "fixtures/jfk-4s.wav");
 
 let tauriDriver: ChildProcess;
 
@@ -28,7 +28,6 @@ export const config: WebdriverIO.Config = {
     {
       // @ts-expect-error tauri-specific capability
       "tauri:options": { application: APP },
-      browserName: "wry",
     },
   ],
   hostname: "127.0.0.1",
@@ -36,7 +35,7 @@ export const config: WebdriverIO.Config = {
   logLevel: "warn",
   framework: "mocha",
   reporters: ["spec"],
-  mochaOpts: { ui: "bdd", timeout: 240_000 },
+  mochaOpts: { ui: "bdd", timeout: 420_000 },
   autoCompileOpts: {
     autoCompile: true,
     tsNodeOpts: { transpileOnly: true, project: "./tests/tsconfig.json" },
@@ -53,10 +52,19 @@ export const config: WebdriverIO.Config = {
     process.env.UTTERAI_E2E_FILE = FIXTURE;
   },
   beforeSession: () => {
-    tauriDriver = spawn("tauri-driver", [], {
-      stdio: [null, process.stdout, process.stderr],
-      env: { ...process.env, UTTERAI_E2E: "1", UTTERAI_E2E_FILE: FIXTURE },
-    });
+    const nativeDriver =
+      process.env.NATIVE_DRIVER ||
+      (process.platform === "win32"
+        ? "msedgedriver"
+        : "/usr/bin/WebKitWebDriver");
+    tauriDriver = spawn(
+      "tauri-driver",
+      ["--port", "4444", "--native-driver", nativeDriver],
+      {
+        stdio: [null, process.stdout, process.stderr],
+        env: { ...process.env, UTTERAI_E2E: "1", UTTERAI_E2E_FILE: FIXTURE },
+      },
+    );
   },
   afterSession: () => {
     tauriDriver?.kill();

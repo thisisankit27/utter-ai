@@ -12,13 +12,16 @@ on:
 permissions:
   contents: write
 
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             triple: x86_64-unknown-linux-gnu
             bundles: "deb,appimage"
           - os: windows-latest
@@ -43,7 +46,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.98.0
         with: { targets: "${{ matrix.triple }}" }
       - uses: Swatinem/rust-cache@v2
-        with: { workspaces: "src-tauri -> target" }
+        with: { workspaces: ". -> target" }
 
       - run: npm ci
 
@@ -57,47 +60,46 @@ jobs:
           curl -fL --retry 3 -o src-tauri/resources/models/ggml-base-q5_1.bin \
             https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q5_1.bin
 
-      - name: Build & release
+      - name: Build & publish release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.event.inputs.tag || github.ref_name }}
-          releaseName: "UtterAI ${{ github.event.inputs.tag || github.ref_name }}"
+          tagName: ${{ env.TAG }}
+          releaseName: "UtterAI ${{ env.TAG }}"
           releaseBody: |
-            Private, local audio & video transcription.
+            **Private, local audio & video transcription.**
 
             Download the installer for your platform below. Every artifact is
-            built by this workflow; checksums are attached.
+            built by this workflow; `checksums.txt` is attached.
 
-            See the full changelog in the commit history.
+            Full notes: [docs/RELEASE_NOTES.md](https://github.com/thisisankit27/utter-ai/blob/master/docs/RELEASE_NOTES.md)
           releaseDraft: false
           prerelease: false
           args: --bundles ${{ matrix.bundles }}
 
-  checksums:
+      - name: Checksums
+        shell: bash
+        run: |
+          set -e
+          cd src-tauri/target/release/bundle || cd target/release/bundle
+          find . -type f \( -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) \
+            -exec sha256sum {} + | sed 's#\./##' > "checksums-${{ matrix.triple }}.txt"
+          cat "checksums-${{ matrix.triple }}.txt"
+          gh release upload "${{ env.TAG }}" "checksums-${{ matrix.triple }}.txt" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  combine-checksums:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Attach SHA-256 checksums
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const tag = context.payload.inputs?.tag || context.ref.replace('refs/tags/', '');
-            const rel = await github.rest.repos.getReleaseByTag({
-              owner: context.repo.owner, repo: context.repo.repo, tag,
-            });
-            const crypto = require('crypto');
-            let lines = [];
-            for (const a of rel.data.assets) {
-              if (a.name.endsWith('.sha256') || a.name === 'checksums.txt') continue;
-              const res = await github.request(a.url, {
-                headers: { accept: 'application/octet-stream' },
-              });
-              const hash = crypto.createHash('sha256').update(Buffer.from(res.data)).digest('hex');
-              lines.push(`${hash}  ${a.name}`);
-            }
-            await github.rest.repos.uploadReleaseAsset({
-              owner: context.repo.owner, repo: context.repo.repo,
-              release_id: rel.data.id, name: 'checksums.txt', data: lines.join('\n') + '\n',
-            });
+      - name: Merge per-platform checksum files into checksums.txt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          gh release download "${{ env.TAG }}" -R "${{ github.repository }}" -p 'checksums-*.txt' -D cs
+          cat cs/*.txt | sort -k2 > checksums.txt
+          cat checksums.txt
+          gh release upload "${{ env.TAG }}" checksums.txt -R "${{ github.repository }}" --clobber
