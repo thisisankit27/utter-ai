@@ -87,12 +87,5 @@ jobs:
           curl -fL -o src-tauri/resources/models/ggml-base-q5_1.bin \
             https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q5_1.bin
       - run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: Ephemeral updater signing key
-        # tauri.conf.json carries an updater pubkey, so the build insists on a
-        # matching private key. CI just needs the build to succeed — the signed
-        # artifacts are discarded — so generate a throwaway key per run.
-        run: |
-          ./node_modules/.bin/tauri signer generate --ci -p "" -w "$RUNNER_TEMP/ci-updater.key" -f
-          echo "TAURI_SIGNING_PRIVATE_KEY=$(cat "$RUNNER_TEMP/ci-updater.key")" >> "$GITHUB_ENV"
-          echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=" >> "$GITHUB_ENV"
+      - uses: ./.github/actions/updater-dev-key
       - run: npm run tauri build -- --bundles deb

@@ -1,0 +1,15 @@
+name: Ephemeral updater signing key
+description: >
+  tauri.conf.json carries an updater public key, so `tauri build` refuses to run
+  without a matching private key. Non-release builds only need to compile and
+  bundle — their signed artifacts are discarded — so this mints a throwaway key
+  for the current job and exports the signing env vars.
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        ./node_modules/.bin/tauri signer generate --ci -p "" -w "$RUNNER_TEMP/updater-dev.key" -f
+        echo "TAURI_SIGNING_PRIVATE_KEY=$(cat "$RUNNER_TEMP/updater-dev.key")" >> "$GITHUB_ENV"
+        echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=" >> "$GITHUB_ENV"
