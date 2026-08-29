@@ -1,0 +1,44 @@
+name: Refresh download counter
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compute total downloads
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner: context.repo.owner, repo: context.repo.repo, per_page: 100,
+            });
+            const total = releases
+              .flatMap(r => r.assets)
+              .filter(a => !/\.(sig|json|txt|sha256)$/.test(a.name))
+              .reduce((s, a) => s + a.download_count, 0);
+            const payload = {
+              total,
+              updated: new Date().toISOString(),
+              note: "Refreshed every 6h by .github/workflows/downloads.yml",
+            };
+            fs.writeFileSync('site/downloads.json', JSON.stringify(payload, null, 2) + '\n');
+      - name: Commit if changed
+        run: |
+          if ! git diff --quiet site/downloads.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add site/downloads.json
+            git commit -m "chore: refresh download counter"
+            git push
+          fi

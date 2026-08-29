@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UtterAI — private, local transcription</title>
+    <meta
+      name="description"
+      content="UtterAI transcribes audio and video entirely on your own computer. No account, no upload, no API key. Free and open source for Windows and Linux."
+    />
+    <link rel="canonical" href="https://utter-ai.vibethroughcode.com/" />
+    <meta property="og:title" content="UtterAI — private, local transcription" />
+    <meta
+      property="og:description"
+      content="Transcribe audio and video on your own machine. No account, no upload. Free and open source."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://utter-ai.vibethroughcode.com/" />
+    <meta property="og:image" content="https://utter-ai.vibethroughcode.com/assets/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#5b54e8" />
+    <link rel="icon" href="assets/favicon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <div class="wrap nav-inner">
+        <a class="brand" href="#top">
+          <span class="mark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+              <path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 11v2" />
+            </svg>
+          </span>
+          UtterAI
+        </a>
+        <nav class="nav-links">
+          <a href="#how">How it works</a>
+          <a href="#formats">Formats</a>
+          <a href="#faq">FAQ</a>
+          <a href="https://github.com/thisisankit27/utter-ai">GitHub</a>
+          <a class="btn btn-primary" href="#download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero wrap">
+        <p class="eyebrow">Runs on your machine · Open source</p>
+        <h1>Your words. Your machine. Nobody else's.</h1>
+        <p class="lede">
+          UtterAI transcribes audio and video right on your computer. No account,
+          no upload, no API key — and it keeps working with the Wi‑Fi off.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" id="primary-dl" href="#download">Download for your computer</a>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
+        </div>
+        <p class="trust">
+          <span><b id="dl-count">—</b> downloads</span>
+          <span>·</span>
+          <span>Windows &amp; Linux</span>
+          <span>·</span>
+          <span>MIT licensed</span>
+        </p>
+
+        <div class="ribbon" id="ribbon" aria-hidden="true"></div>
+
+        <figure class="frame reveal">
+          <div class="bar"><i></i><i></i><i></i></div>
+          <img
+            src="assets/shot-transcript.png"
+            alt="UtterAI showing a finished transcript with timestamps and a playback ribbon"
+            width="1880"
+            height="1180"
+            loading="eager"
+          />
+        </figure>
+      </section>
+
+      <section class="wrap" id="why">
+        <div class="section-head reveal">
+          <p class="eyebrow">Why local</p>
+          <h2>The whole thing runs on your computer.</h2>
+          <p>
+            Personal recordings shouldn't have to pass through someone else's
+            servers to become text. UtterAI does the work locally, so they don't.
+          </p>
+        </div>
+        <div class="pillars">
+          <div class="pillar reveal">
+            <div class="ic">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8.5 7 10 4-1.5 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <h3>Private by default</h3>
+            <p>
+              Audio never leaves the device. The only network request UtterAI
+              makes is downloading a model — and only when you ask it to.
+            </p>
+          </div>
+          <div class="pillar reveal">
+            <div class="ic">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/></svg>
+            </div>
+            <h3>Fast, and only what you need</h3>
+            <p>
+              Trim to the five minutes that matter and UtterAI transcribes just
+              that. The built‑in model runs several times faster than real time.
+            </p>
+          </div>
+          <div class="pillar reveal">
+            <div class="ic">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 11v2"/></svg>
+            </div>
+            <h3>Accurate where it counts</h3>
+            <p>
+              Powered by OpenAI's Whisper models via whisper.cpp. Start with the
+              built‑in model; step up to Large (Turbo) for accents and noise.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="wrap" id="how">
+        <div class="section-head reveal">
+          <p class="eyebrow">How it works</p>
+          <h2>Three steps, no manual.</h2>
+        </div>
+        <div class="steps">
+          <article class="step reveal">
+            <div>
+              <span class="step-num">Step 1</span>
+              <h3>Choose a file and trim it</h3>
+              <p>
+                Drop in audio or video — MP3, WAV, M4A, MP4, MKV and more. Pick
+                the whole thing or drag the handles to a range. You always see
+                exactly how much will be transcribed.
+              </p>
+            </div>
+            <div class="step-media">
+              <img src="assets/shot-review.png" alt="Choosing a range on the speech ribbon" width="1200" height="820" loading="lazy" />
+            </div>
+          </article>
+          <article class="step reveal">
+            <div>
+              <span class="step-num">Step 2</span>
+              <h3>Watch it actually work</h3>
+              <p>
+                A real percentage from the model, the current stage, and a live
+                preview of the text as it comes in. If it can't give an exact
+                number, it tells you what it's doing instead.
+              </p>
+            </div>
+            <div class="step-media">
+              <img src="assets/shot-working.png" alt="Transcription progress with a live preview" width="1200" height="820" loading="lazy" />
+            </div>
+          </article>
+          <article class="step reveal">
+            <div>
+              <span class="step-num">Step 3</span>
+              <h3>Read, edit, export</h3>
+              <p>
+                A readable transcript and a timestamped view. Click any line to
+                play it, search the text, fix a word, then export to TXT, SRT,
+                VTT, Markdown or JSON.
+              </p>
+            </div>
+            <div class="step-media">
+              <img src="assets/shot-transcript.png" alt="The finished transcript view" width="1200" height="820" loading="lazy" />
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="wrap" id="formats">
+        <div class="section-head reveal">
+          <p class="eyebrow">Output</p>
+          <h2>Exports that fit where the transcript is going.</h2>
+        </div>
+        <div class="formats reveal">
+          <span class="fmt">.txt</span>
+          <span class="fmt">.txt + timestamps</span>
+          <span class="fmt">.srt</span>
+          <span class="fmt">.vtt</span>
+          <span class="fmt">.md</span>
+          <span class="fmt">.json</span>
+        </div>
+        <pre class="sample reveal">
+<span class="ts">1</span>
+<span class="ts">00:00:00,000 --&gt; 00:00:03,480</span>
+And so, my fellow Americans, ask not
+
+<span class="ts">2</span>
+<span class="ts">00:00:03,480 --&gt; 00:00:07,020</span>
+what your country can do for you</span></pre>
+      </section>
+
+      <section class="wrap" id="features">
+        <div class="section-head reveal">
+          <p class="eyebrow">Details</p>
+          <h2>Built for real recordings.</h2>
+        </div>
+        <div class="grid">
+          <div class="feat reveal"><h3>Range selection</h3><p>Handles, numeric in/out, and quick presets like "last 5 minutes".</p></div>
+          <div class="feat reveal"><h3>Play‑synced transcript</h3><p>Click a line to jump there; the current line highlights as it plays.</p></div>
+          <div class="feat reveal"><h3>Search &amp; edit</h3><p>Find any phrase, double‑click to correct a word, export the fixed version.</p></div>
+          <div class="feat reveal"><h3>Model choice</h3><p>Base is built in. Small, Medium and Large (Turbo) download on demand with resume.</p></div>
+          <div class="feat reveal"><h3>Language handling</h3><p>Auto‑detects the language, or set it yourself. Optionally translate to English.</p></div>
+          <div class="feat reveal"><h3>History</h3><p>Recent transcripts stay on your machine so you can reopen and re‑export them.</p></div>
+        </div>
+      </section>
+
+      <section class="dl" id="download">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <p class="eyebrow">Download</p>
+            <h2>Get UtterAI.</h2>
+            <p>Free and open source. No sign‑up. Roughly 120&nbsp;MB, model included.</p>
+          </div>
+          <div class="dl-cards" id="dl-cards">
+            <div class="dl-card reveal">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.5 10 4.5v7H3zM11 4.3 21 3v8.5H11zM3 12.5h7v7L3 18.5zM11 12.5h10V21l-10-1.3z"/></svg>
+                Windows
+              </h3>
+              <div class="opts" data-platform="windows">
+                <a href="https://github.com/thisisankit27/utter-ai/releases/latest" data-ext="exe">Installer (.exe) <span>—</span></a>
+                <a href="https://github.com/thisisankit27/utter-ai/releases/latest" data-ext="msi">MSI package (.msi) <span>—</span></a>
+              </div>
+            </div>
+            <div class="dl-card reveal">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M9 21c1-3 1-6 0-9-.7-2 .3-4 3-4s3.7 3 3 6c-.5 2-.5 5 0 7" stroke-linecap="round"/></svg>
+                Linux
+              </h3>
+              <div class="opts" data-platform="linux">
+                <a href="https://github.com/thisisankit27/utter-ai/releases/latest" data-ext="AppImage">AppImage <span>—</span></a>
+                <a href="https://github.com/thisisankit27/utter-ai/releases/latest" data-ext="deb">Debian / Ubuntu (.deb) <span>—</span></a>
+              </div>
+            </div>
+          </div>
+          <p class="dl-note">
+            Every release is built by GitHub Actions with published checksums.
+            <a href="https://github.com/thisisankit27/utter-ai/releases">All releases and notes →</a>
+          </p>
+        </div>
+      </section>
+
+      <section class="wrap faq" id="faq">
+        <div class="section-head reveal">
+          <p class="eyebrow">Questions</p>
+          <h2>Good to know.</h2>
+        </div>
+        <details reveal><summary>Does anything get uploaded?</summary><p>No. Transcription happens on your computer. UtterAI only uses the network when you choose to download a larger model, and this website only reads the public download count from GitHub.</p></details>
+        <details><summary>Do I need an OpenAI or other API key?</summary><p>No. The Whisper models run locally through whisper.cpp. There's no key and no per‑minute cost.</p></details>
+        <details><summary>How accurate is it?</summary><p>The built‑in Base model handles clear speech well. For accents, crosstalk or noisy audio, download the Small, Medium or Large (Turbo) model from Settings — accuracy goes up, speed comes down.</p></details>
+        <details><summary>What files can it read?</summary><p>Common audio and video: MP3, WAV, M4A, AAC, FLAC, OGG, Opus, MP4, MKV, MOV, WebM and more. If a file has an audio track, UtterAI can usually transcribe it.</p></details>
+        <details><summary>Is there a file length limit?</summary><p>No hard limit. Longer files take longer; trimming to the part you need keeps it quick.</p></details>
+        <details><summary>Which languages are supported?</summary><p>Whisper supports around 100 languages. UtterAI auto‑detects, or you can choose one. It can also translate speech to English.</p></details>
+        <details><summary>macOS?</summary><p>Not yet. The transcription engine is a portable Rust crate, so a Mac build is feasible later. Windows and Linux come first.</p></details>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <p>
+          <a href="https://github.com/thisisankit27/utter-ai">Source</a> ·
+          <a href="https://github.com/thisisankit27/utter-ai/issues">Issues</a> ·
+          <a href="https://github.com/thisisankit27/utter-ai/blob/master/docs/PRIVACY.md">Privacy</a>
+        </p>
+        <p style="margin-top: 10px">
+          UtterAI is free software under the MIT license. Built with whisper.cpp,
+          ffmpeg and Tauri.
+        </p>
+      </div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

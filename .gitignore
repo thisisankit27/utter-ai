@@ -1,0 +1,38 @@
+# Rust
+/target
+**/target
+Cargo.lock.bak
+
+# Node
+node_modules
+dist
+dist-ssr
+.vite
+*.local
+
+# Tauri
+/src-tauri/target
+/src-tauri/gen
+
+# Bundled binaries & models (fetched by scripts/fetch-binaries)
+/src-tauri/bin/*
+!/src-tauri/bin/.gitkeep
+/src-tauri/resources/models/*
+!/src-tauri/resources/models/.gitkeep
+
+# Landing page build
+/site/dist
+/site/.astro
+
+# Editor / OS
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+*.log
+
+# Test artifacts
+/tests/artifacts
+/playwright-report
+/test-results
+/fixtures/generated
