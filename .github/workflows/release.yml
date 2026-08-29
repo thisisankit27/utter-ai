@@ -74,7 +74,11 @@ jobs:
         with:
           tagName: ${{ env.TAG }}
           releaseName: "UtterAI ${{ env.TAG }}"
-          includeUpdaterJson: true
+          # v1 renamed includeUpdaterJson → uploadUpdaterJson.
+          uploadUpdaterJson: true
+          # Windows: point latest.json at the per-user NSIS installer, which
+          # updates in place without elevation (unlike the MSI).
+          updaterJsonPreferNsis: true
           releaseBody: |
             **Private, local audio & video transcription.**
 
