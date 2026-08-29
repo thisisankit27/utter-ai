@@ -35,6 +35,27 @@ git push origin v1.0.0
 
 `workflow_dispatch` also works with a `tag` input for re-runs.
 
+### Updater signing key (one-time)
+
+In-app updates require a signing keypair. The **public** key lives in
+`src-tauri/tauri.conf.json` (`plugins.updater.pubkey`). The **private** key and
+its password are repo secrets used only by `release.yml`:
+
+```bash
+npx @tauri-apps/cli signer generate -w utterai.key   # prompts for a password
+gh secret set TAURI_SIGNING_PRIVATE_KEY          < utterai.key
+gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD < password.txt
+```
+
+**Back the private key + password up somewhere safe (a password manager).** If
+they're lost, a new key means every existing install must be manually
+reinstalled to accept updates again — the app rejects packages signed by an
+unknown key. Rotating the key = new pubkey in `tauri.conf.json` + a normal
+release; users on the old key reinstall once.
+
+Without the secrets the release still builds, but ships no `latest.json`, so
+installed apps won't see the update.
+
 ## Download counter
 
 `.github/workflows/downloads.yml` runs every 6 hours and whenever a release is
