@@ -17,7 +17,7 @@ hound = "3.5"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
 sha2 = "0.10"
 futures-util = "0.3"
-dirs = "5"
+dirs = "6"
 fs4 = "0.13"
 tokio = { workspace = true }
 
