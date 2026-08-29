@@ -84,69 +84,106 @@ document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
   else btn.textContent = "Download for Linux";
 })();
 
-/* live download counter — real data, cache-friendly */
-(async function counter() {
+/* live download counter — real data only, refreshes while the tab is open */
+(function counter() {
   const el = document.getElementById("dl-count");
+  if (!el) return;
+  const label = el.nextSibling; // the " downloads" text node
+  const cacheKey = "utterai-dl";
+  const IGNORE = /\.(sig|json|txt|sha256|blockmap)$/i;
+
   const fmt = (n) =>
     n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k" : String(n);
 
-  const countUp = (target) => {
-    const dur = 900;
+  let shown = 0;
+  let raf = 0;
+  const animateTo = (target) => {
+    cancelAnimationFrame(raf);
+    const from = shown;
     const start = performance.now();
-    const step = (now) => {
+    const dur = 900;
+    const tick = (now) => {
       const k = Math.min(1, (now - start) / dur);
-      el.textContent = fmt(Math.round(target * (1 - Math.pow(1 - k, 3))));
-      if (k < 1) requestAnimationFrame(step);
+      shown = Math.round(from + (target - from) * (1 - Math.pow(1 - k, 3)));
+      el.textContent = fmt(shown);
+      if (k < 1) raf = requestAnimationFrame(tick);
+      else shown = target;
     };
-    requestAnimationFrame(step);
+    raf = requestAnimationFrame(tick);
   };
 
-  const cacheKey = "utterai-dl";
-  try {
-    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
-    if (cached && Date.now() - cached.at < 9e5) {
-      countUp(cached.n);
-      return;
-    }
-  } catch {
-    /* ignore */
-  }
-
-  // 1. committed snapshot (rate-limit proof), 2. live GitHub API
-  let total = null;
-  try {
-    const r = await fetch("downloads.json", { cache: "no-cache" });
-    if (r.ok) total = (await r.json()).total;
-  } catch {
-    /* fall through */
-  }
-  if (total == null) {
+  const show = (total) => {
+    if (typeof total !== "number" || !isFinite(total) || total < 0) return false;
+    el.classList.add("is-live");
+    if (label) label.textContent = total === 1 ? " download" : " downloads";
+    animateTo(total);
     try {
-      const r = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=100`);
-      if (r.ok) {
-        const releases = await r.json();
-        total = releases
-          .flatMap((rel) => rel.assets || [])
-          .filter((a) => !/\.(sig|json)$/.test(a.name))
-          .reduce((s, a) => s + (a.download_count || 0), 0);
-      }
+      localStorage.setItem(cacheKey, JSON.stringify({ n: total, at: Date.now() }));
     } catch {
       /* ignore */
     }
-  }
+    return true;
+  };
 
-  if (!total) {
-    // no releases yet, or counts unavailable — don't show a lonely "0"
-    el.textContent = "Free";
-    el.nextSibling.textContent = " & open source";
-    return;
-  }
-  countUp(total);
+  // Live GitHub API first (always current); committed snapshot as the
+  // rate-limit fallback. Never fabricates — falls back to a plain label only
+  // when neither source yields a number.
+  const fromApi = async () => {
+    const r = await fetch(
+      `https://api.github.com/repos/${REPO}/releases?per_page=100`,
+      { headers: { Accept: "application/vnd.github+json" } },
+    );
+    if (!r.ok) throw new Error(String(r.status));
+    const releases = await r.json();
+    return releases
+      .flatMap((rel) => rel.assets || [])
+      .filter((a) => !IGNORE.test(a.name))
+      .reduce((s, a) => s + (a.download_count || 0), 0);
+  };
+  const fromSnapshot = async () => {
+    const r = await fetch("downloads.json", { cache: "no-cache" });
+    if (!r.ok) throw new Error(String(r.status));
+    const n = (await r.json()).total;
+    if (typeof n !== "number") throw new Error("no total");
+    return n;
+  };
+
+  const refresh = async () => {
+    let total;
+    try {
+      total = await fromApi();
+    } catch {
+      try {
+        total = await fromSnapshot();
+      } catch {
+        return false;
+      }
+    }
+    return show(total);
+  };
+
+  // Paint the cached value immediately so there's no flash of "—".
   try {
-    localStorage.setItem(cacheKey, JSON.stringify({ n: total, at: Date.now() }));
+    const c = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (c && typeof c.n === "number") show(c.n);
   } catch {
     /* ignore */
   }
+
+  refresh().then((ok) => {
+    if (ok || shown > 0) return;
+    // Genuinely no data available — say something honest instead of "0".
+    el.textContent = "Free";
+    if (label) label.textContent = " & open source";
+  });
+
+  // Keep it live: re-check every 90s while the page is visible.
+  setInterval(() => {
+    if (document.visibilityState === "visible") refresh();
+  }, 90_000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") refresh();
+  });
 })();
 
 /* fill in real asset links + sizes from the latest release */

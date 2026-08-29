@@ -14,6 +14,7 @@ const BROWSER_GLOBALS = {
   setInterval: "readonly",
   clearInterval: "readonly",
   requestAnimationFrame: "readonly",
+  cancelAnimationFrame: "readonly",
   performance: "readonly",
   matchMedia: "readonly",
   IntersectionObserver: "readonly",
