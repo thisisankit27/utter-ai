@@ -8,8 +8,8 @@ import {
   IconMoon,
   IconSettings,
   IconSun,
-  IconWave,
 } from "@/components/icons";
+import { LogoMark } from "@/components/Logo";
 import { Intake } from "@/screens/Intake";
 import { Review } from "@/screens/Review";
 import { Working } from "@/screens/Working";
@@ -63,9 +63,7 @@ export default function App() {
           onClick={reset}
           aria-label="UtterAI — start over"
         >
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-iris text-white">
-            <IconWave className="h-4 w-4" />
-          </span>
+          <LogoMark size={28} className="rounded-lg" />
           <span className="font-display text-[15px] font-semibold tracking-tight">
             UtterAI
           </span>
@@ -121,8 +119,9 @@ export default function App() {
 
       <main className="relative flex-1 overflow-hidden">
         {!ready ? (
-          <div className="flex h-full items-center justify-center text-sm text-faint">
-            Starting UtterAI…
+          <div className="flex h-full flex-col items-center justify-center gap-4">
+            <LogoMark size={44} className="animate-pulse rounded-xl" />
+            <span className="text-sm text-faint">Starting UtterAI…</span>
           </div>
         ) : (
           <AnimatePresence initial={false}>
