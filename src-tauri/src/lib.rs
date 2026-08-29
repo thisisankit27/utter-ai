@@ -168,7 +168,7 @@ async fn download_model(
     let id2 = id.clone();
     let result = model::download(spec, &cancel, move |p: DownloadProgress| {
         let _ = app2.emit(
-            "model://download-progress",
+            "model-download-progress",
             serde_json::json!({
                 "id": id2,
                 "received": p.received_bytes,
@@ -182,7 +182,7 @@ async fn download_model(
     *state.download_cancel.lock() = None;
     match result {
         Ok(_) => {
-            let _ = app.emit("model://download-done", serde_json::json!({ "id": id }));
+            let _ = app.emit("model-download-done", serde_json::json!({ "id": id }));
             Ok(())
         }
         Err(e) => Err(e.to_user()),
@@ -294,7 +294,7 @@ fn run_job(
             *last_emit_c.lock() = std::time::Instant::now();
         }
         let _ = app_sink.emit(
-            "transcription://update",
+            "transcription-update",
             JobUpdate::Progress {
                 job_id: job_sink.clone(),
                 overall,
@@ -336,7 +336,7 @@ fn run_job(
             }
         }
     };
-    match app.emit("transcription://update", update) {
+    match app.emit("transcription-update", update) {
         Ok(()) => tracing::info!(%job_id, "final job update emitted"),
         Err(e) => tracing::error!(%job_id, error = %e, "failed to emit final job update"),
     }

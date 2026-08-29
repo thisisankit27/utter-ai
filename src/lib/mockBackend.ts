@@ -206,10 +206,10 @@ export async function mockInvoke<T>(cmd: string, args?: Record<string, unknown>)
         f += 0.08 + Math.random() * 0.05;
         if (f >= 1) {
           clearInterval(iv);
-          emit("model://download-progress", { id, received: 1, total: 1, fraction: 1 });
-          emit("model://download-done", { id });
+          emit("model-download-progress", { id, received: 1, total: 1, fraction: 1 });
+          emit("model-download-done", { id });
         } else {
-          emit("model://download-progress", { id, received: f, total: 1, fraction: f });
+          emit("model-download-progress", { id, received: f, total: 1, fraction: f });
         }
       }, 260);
       return undefined as T;
@@ -236,7 +236,7 @@ function runMockJob(jobId: string, name: string, dur: number, offset: number) {
   let i = 0;
   const tick = () => {
     if (cancelled.has(jobId)) {
-      emit("transcription://update", {
+      emit("transcription-update", {
         phase: "failed",
         job_id: jobId,
         error: { code: "cancelled", title: "Transcription cancelled", message: "You stopped this transcription. Nothing was saved.", actions: [], detail: "cancelled" },
@@ -245,7 +245,7 @@ function runMockJob(jobId: string, name: string, dur: number, offset: number) {
     }
     if (i < steps.length) {
       const s = steps[i++];
-      emit("transcription://update", { phase: "progress", job_id: jobId, overall: s.overall, stage: s.stage, note: s.note, partial: null });
+      emit("transcription-update", { phase: "progress", job_id: jobId, overall: s.overall, stage: s.stage, note: s.note, partial: null });
       setTimeout(tick, 500);
       return;
     }
@@ -253,7 +253,7 @@ function runMockJob(jobId: string, name: string, dur: number, offset: number) {
     const previewCount = Math.min(6, MOCK_LINES.length);
     if (seg < previewCount) {
       const [s, e, text] = MOCK_LINES[seg];
-      emit("transcription://update", {
+      emit("transcription-update", {
         phase: "progress",
         job_id: jobId,
         overall: 0.17 + ((seg + 1) / previewCount) * 0.79,
@@ -265,9 +265,9 @@ function runMockJob(jobId: string, name: string, dur: number, offset: number) {
       setTimeout(tick, 380);
       return;
     }
-    emit("transcription://update", { phase: "progress", job_id: jobId, overall: 0.99, stage: "finalizing", note: "Tidying up the transcript", partial: null });
+    emit("transcription-update", { phase: "progress", job_id: jobId, overall: 0.99, stage: "finalizing", note: "Tidying up the transcript", partial: null });
     setTimeout(() => {
-      emit("transcription://update", {
+      emit("transcription-update", {
         phase: "done",
         job_id: jobId,
         transcript: buildTranscript(name, dur, offset),
