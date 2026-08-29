@@ -28,7 +28,10 @@ fn transcribes_jfk_sample() {
         return;
     };
     let model = PathBuf::from(model);
-    assert!(model.exists(), "UTTERAI_TEST_MODEL does not exist: {model:?}");
+    assert!(
+        model.exists(),
+        "UTTERAI_TEST_MODEL does not exist: {model:?}"
+    );
 
     let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../fixtures/jfk.wav")
@@ -89,8 +92,8 @@ fn transcribes_jfk_sample() {
 
 #[test]
 fn rejects_corrupt_file() {
-    let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/generated/broken.mp3");
+    let fixture =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/generated/broken.mp3");
     if !fixture.exists() {
         eprintln!("skipping: run scripts/make-fixtures.sh first");
         return;
@@ -99,7 +102,10 @@ fn rejects_corrupt_file() {
         .expect_err("corrupt file should be rejected");
     let user = err.to_user();
     assert!(
-        matches!(user.code.as_str(), "corrupt_media" | "unsupported_media" | "no_audio_track"),
+        matches!(
+            user.code.as_str(),
+            "corrupt_media" | "unsupported_media" | "no_audio_track"
+        ),
         "got {}",
         user.code
     );

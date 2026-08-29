@@ -184,8 +184,16 @@ mod tests {
     fn sample() -> Transcript {
         Transcript {
             segments: vec![
-                Segment { start: 0.0, end: 2.5, text: "Hello world.".into() },
-                Segment { start: 2.5, end: 5.0, text: "This is UtterAI.".into() },
+                Segment {
+                    start: 0.0,
+                    end: 2.5,
+                    text: "Hello world.".into(),
+                },
+                Segment {
+                    start: 2.5,
+                    end: 5.0,
+                    text: "This is UtterAI.".into(),
+                },
             ],
             paragraphs: vec![Segment {
                 start: 0.0,
@@ -216,7 +224,11 @@ mod tests {
 
     #[test]
     fn timestamps_never_go_backwards_or_zero_length() {
-        let segs = vec![Segment { start: 10.0, end: 10.0, text: "tick".into() }];
+        let segs = vec![Segment {
+            start: 10.0,
+            end: 10.0,
+            text: "tick".into(),
+        }];
         let out = render_srt(&segs);
         assert!(out.contains("00:00:10,000 --> 00:00:10,200"));
     }

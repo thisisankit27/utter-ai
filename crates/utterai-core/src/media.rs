@@ -57,8 +57,10 @@ pub fn probe_media(ffprobe: &Path, input: &Path) -> Result<MediaInfo> {
         return Err(CoreError::UnsupportedMedia { detail: stderr });
     }
 
-    let probe: FfProbe = serde_json::from_slice(&output.stdout)
-        .map_err(|e| CoreError::CorruptMedia { detail: e.to_string() })?;
+    let probe: FfProbe =
+        serde_json::from_slice(&output.stdout).map_err(|e| CoreError::CorruptMedia {
+            detail: e.to_string(),
+        })?;
 
     let size_bytes = probe
         .format
@@ -68,11 +70,18 @@ pub fn probe_media(ffprobe: &Path, input: &Path) -> Result<MediaInfo> {
         .or_else(|| std::fs::metadata(input).ok().map(|m| m.len()))
         .unwrap_or(0);
 
-    let audio = probe.streams.iter().find(|s| s.codec_type.as_deref() == Some("audio"));
-    let video = probe.streams.iter().find(|s| s.codec_type.as_deref() == Some("video"));
+    let audio = probe
+        .streams
+        .iter()
+        .find(|s| s.codec_type.as_deref() == Some("audio"));
+    let video = probe
+        .streams
+        .iter()
+        .find(|s| s.codec_type.as_deref() == Some("video"));
 
     // Some video "streams" are just attached cover art — ignore those.
-    let real_video = video.filter(|v| v.disposition.as_ref().map(|d| d.attached_pic).unwrap_or(0) == 0);
+    let real_video =
+        video.filter(|v| v.disposition.as_ref().map(|d| d.attached_pic).unwrap_or(0) == 0);
 
     let duration_secs = probe
         .format

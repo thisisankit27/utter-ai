@@ -55,9 +55,9 @@ fn locate(sidecar: &str, fallback: &str) -> PathBuf {
         }
     }
 
-    let dev = Path::new(env!("CARGO_MANIFEST_DIR")).join("bin").join(exe(&format!(
-        "{sidecar}-{TRIPLE}"
-    )));
+    let dev = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("bin")
+        .join(exe(&format!("{sidecar}-{TRIPLE}")));
     if dev.exists() {
         return dev;
     }

@@ -125,14 +125,14 @@ export default function App() {
             Starting UtterAI…
           </div>
         ) : (
-          <AnimatePresence mode="wait">
+          <AnimatePresence initial={false}>
             <motion.div
               key={route}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className="h-full overflow-y-auto"
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0 h-full overflow-y-auto"
             >
               <Screen />
             </motion.div>

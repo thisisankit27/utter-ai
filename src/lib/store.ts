@@ -19,7 +19,7 @@ export type Route =
   | "history"
   | "settings";
 
-interface Media {
+export interface Media {
   path: string;
   info: MediaInfo;
 }

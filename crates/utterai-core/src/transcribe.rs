@@ -10,9 +10,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
-use whisper_rs::{
-    FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters,
-};
+use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
 
 use crate::audio;
 use crate::chunk;
@@ -162,13 +160,10 @@ pub fn transcribe(
         note: "Loading the transcription model".into(),
     });
     whisper_rs::install_logging_hooks();
-    let ctx = WhisperContext::new_with_params(
-        &req.model_path,
-        WhisperContextParameters::default(),
-    )
-    .map_err(|e| CoreError::ModelCorrupt {
-        detail: e.to_string(),
-    })?;
+    let ctx = WhisperContext::new_with_params(&req.model_path, WhisperContextParameters::default())
+        .map_err(|e| CoreError::ModelCorrupt {
+            detail: e.to_string(),
+        })?;
     let mut state = ctx
         .create_state()
         .map_err(|e| CoreError::Transcription(e.to_string()))?;
@@ -234,7 +229,10 @@ pub fn transcribe(
     if cancel.load(Ordering::Relaxed) {
         return Err(CoreError::Cancelled);
     }
-    tracing::info!(elapsed_ms = started.elapsed().as_millis(), "whisper full() done");
+    tracing::info!(
+        elapsed_ms = started.elapsed().as_millis(),
+        "whisper full() done"
+    );
 
     // ---- 5. Finalize -----------------------------------------------
     sink(TranscribeEvent::Stage {

@@ -104,7 +104,10 @@ fn get_settings(state: State<AppState>) -> Settings {
 
 #[tauri::command]
 fn set_settings(state: State<AppState>, settings: Settings) -> Result<(), String> {
-    state.store.set_settings(settings).map_err(|e| e.to_string())
+    state
+        .store
+        .set_settings(settings)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -134,7 +137,10 @@ fn list_models(state: State<AppState>) -> ModelCatalog {
 }
 
 #[tauri::command]
-async fn probe_media(app: AppHandle, path: String) -> Result<media::MediaInfo, utterai_core::UserError> {
+async fn probe_media(
+    app: AppHandle,
+    path: String,
+) -> Result<media::MediaInfo, utterai_core::UserError> {
     let sc = sidecars::Sidecars::resolve();
     let path = PathBuf::from(path);
     tauri::async_runtime::spawn_blocking(move || {
@@ -212,8 +218,9 @@ fn start_transcription(
         .model_id
         .filter(|m| !m.is_empty())
         .unwrap_or(settings.default_model);
-    let spec = model::find(&model_id)
-        .ok_or_else(|| utterai_core::CoreError::ModelUnavailable(model_id.clone().into()).to_user())?;
+    let spec = model::find(&model_id).ok_or_else(|| {
+        utterai_core::CoreError::ModelUnavailable(model_id.clone().into()).to_user()
+    })?;
     let model_path = spec.installed_path();
     if !model_path.exists() {
         return Err(utterai_core::CoreError::ModelUnavailable(model_path).to_user());
@@ -277,13 +284,7 @@ fn run_job(
         );
     });
 
-    let outcome = utterai_core::transcribe::transcribe(
-        &req,
-        &sc.ffmpeg,
-        &sc.ffprobe,
-        cancel,
-        sink,
-    );
+    let outcome = utterai_core::transcribe::transcribe(&req, &sc.ffmpeg, &sc.ffprobe, cancel, sink);
 
     // Job is finished either way — drop its cancel handle.
     if let Some(state) = app.try_state::<AppState>() {
@@ -320,7 +321,10 @@ struct ProgressModel {
 }
 
 impl ProgressModel {
-    fn apply(&mut self, ev: TranscribeEvent) -> (f32, String, String, Option<utterai_core::Segment>) {
+    fn apply(
+        &mut self,
+        ev: TranscribeEvent,
+    ) -> (f32, String, String, Option<utterai_core::Segment>) {
         let mut partial = None;
         let mut note = String::new();
         match ev {
@@ -358,7 +362,12 @@ impl ProgressModel {
         if note.is_empty() {
             note = default_note(stage_name).to_string();
         }
-        (overall.clamp(0.0, 1.0), stage_name.to_string(), note, partial)
+        (
+            overall.clamp(0.0, 1.0),
+            stage_name.to_string(),
+            note,
+            partial,
+        )
     }
 }
 
@@ -386,11 +395,11 @@ fn export_transcript(
     format: String,
     dest: String,
 ) -> Result<(), utterai_core::UserError> {
-    let fmt = parse_format(&format)
-        .ok_or_else(|| utterai_core::CoreError::Other(format!("unknown format {format}")).to_user())?;
+    let fmt = parse_format(&format).ok_or_else(|| {
+        utterai_core::CoreError::Other(format!("unknown format {format}")).to_user()
+    })?;
     let body = utterai_core::export::render(&transcript, fmt);
-    std::fs::write(&dest, body)
-        .map_err(|e| utterai_core::CoreError::Io(e).to_user())
+    std::fs::write(&dest, body).map_err(|e| utterai_core::CoreError::Io(e).to_user())
 }
 
 #[tauri::command]

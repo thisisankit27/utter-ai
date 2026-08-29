@@ -106,7 +106,10 @@ pub fn find(id: &str) -> Option<&'static ModelSpec> {
 }
 
 pub fn bundled_spec() -> &'static ModelSpec {
-    MODELS.iter().find(|m| m.bundled).expect("a bundled model is defined")
+    MODELS
+        .iter()
+        .find(|m| m.bundled)
+        .expect("a bundled model is defined")
 }
 
 /// Models the picker should show, best-default first.
@@ -155,7 +158,10 @@ pub fn is_installed(id: &str) -> bool {
 pub fn install_bundled(bundled_file: &Path) -> Result<PathBuf> {
     let spec = bundled_spec();
     let dest = spec.installed_path();
-    if std::fs::metadata(&dest).map(|m| m.len() == spec.size_bytes).unwrap_or(false) {
+    if std::fs::metadata(&dest)
+        .map(|m| m.len() == spec.size_bytes)
+        .unwrap_or(false)
+    {
         return Ok(dest);
     }
     std::fs::create_dir_all(paths::model_dir())?;
@@ -185,7 +191,10 @@ pub async fn download(
 ) -> Result<PathBuf> {
     std::fs::create_dir_all(paths::model_dir())?;
     let final_path = spec.installed_path();
-    if std::fs::metadata(&final_path).map(|m| m.len() == spec.size_bytes).unwrap_or(false) {
+    if std::fs::metadata(&final_path)
+        .map(|m| m.len() == spec.size_bytes)
+        .unwrap_or(false)
+    {
         return Ok(final_path);
     }
 
@@ -202,16 +211,17 @@ pub async fn download(
     let client = reqwest::Client::builder()
         .user_agent("UtterAI")
         .build()
-        .map_err(|e| CoreError::Download { detail: e.to_string() })?;
+        .map_err(|e| CoreError::Download {
+            detail: e.to_string(),
+        })?;
 
     let mut req = client.get(spec.url());
     if existing > 0 {
         req = req.header(reqwest::header::RANGE, format!("bytes={existing}-"));
     }
-    let resp = req
-        .send()
-        .await
-        .map_err(|e| CoreError::Download { detail: e.to_string() })?;
+    let resp = req.send().await.map_err(|e| CoreError::Download {
+        detail: e.to_string(),
+    })?;
 
     let resuming = resp.status() == reqwest::StatusCode::PARTIAL_CONTENT;
     if !resp.status().is_success() {
@@ -240,7 +250,9 @@ pub async fn download(
         if cancel.load(Ordering::Relaxed) {
             return Err(CoreError::Cancelled);
         }
-        let chunk = chunk.map_err(|e| CoreError::Download { detail: e.to_string() })?;
+        let chunk = chunk.map_err(|e| CoreError::Download {
+            detail: e.to_string(),
+        })?;
         file.write_all(&chunk)?;
         received += chunk.len() as u64;
         on_progress(DownloadProgress {
