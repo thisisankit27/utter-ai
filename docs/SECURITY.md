@@ -4,6 +4,9 @@ This is a self-review of the areas that matter for an app people feed personal
 recordings into. It is kept in the repo so the claims can be checked against the
 code.
 
+> **Reporting a vulnerability?** See [`SECURITY.md`](../SECURITY.md) at the repo
+> root — please don't open a public issue.
+
 ## Threat model
 
 UtterAI is a local desktop app. It has no server component and no auth. The
@@ -97,5 +100,5 @@ system `/usr/bin/ffmpeg`.
 
 ## Reporting
 
-Open a GitHub issue, or for anything sensitive, mark it clearly and a maintainer
-will follow up privately.
+Private disclosure only — see [`SECURITY.md`](../SECURITY.md) at the repo root
+for how to report ("Report a vulnerability" on the Security tab, or email).

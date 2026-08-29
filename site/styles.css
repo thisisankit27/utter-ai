@@ -175,10 +175,7 @@ header.nav.scrolled {
 .brand .mark {
   width: 28px;
   height: 28px;
-  border-radius: 8px;
-  background: var(--iris);
-  display: grid;
-  place-items: center;
+  display: block;
 }
 .nav-links {
   display: flex;
