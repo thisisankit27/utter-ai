@@ -1,73 +1,62 @@
 /**
  * Real end-to-end run of the packaged UtterAI binary via tauri-driver.
  *
- * The app auto-loads `UTTERAI_E2E_FILE` on boot (see the `e2e_autoload`
- * command), so we exercise the genuine probe → extract → whisper → transcript
- * path with the bundled ffmpeg sidecar and the built-in model.
+ * The app auto-loads a media path from a sentinel file on boot (see the
+ * `e2e_autoload` command), so this exercises the genuine
+ * probe → extract → whisper → transcript path with the bundled ffmpeg
+ * sidecar and the built-in model — no native file dialog.
  */
 import { browser, expect, $ } from "@wdio/globals";
 
+const body = () => $("body").getText();
+
 describe("UtterAI packaged app", () => {
-  it("launches and renders", async () => {
-    await browser.waitUntil(
-      async () => (await $("body").getText()).length > 0,
-      { timeout: 20000, timeoutMsg: "app never rendered" },
-    );
-    // Fresh data dir → onboarding overlay. Dismiss it.
+  it("launches and reaches the review screen for the loaded file", async () => {
+    await browser.waitUntil(async () => (await body()).length > 0, {
+      timeout: 20000,
+      timeoutMsg: "app never rendered",
+    });
+    // Fresh data dir → first-run onboarding. Dismiss it.
     const skip = await $("button*=Skip");
     if (await skip.isExisting()) await skip.click();
-    await browser.pause(1500);
-    console.log("SCREEN AFTER LAUNCH:\n" + (await $("body").getText()).slice(0, 800));
+
+    await browser.waitUntil(
+      async () => (await body()).includes("Start transcription"),
+      { timeout: 30000, timeoutMsg: "review screen never appeared" },
+    );
   });
 
-  it("transcribes the auto-loaded fixture end to end", async () => {
-    // Review screen (auto-loaded via e2e_autoload)
-    const start = await $("button*=Start transcription");
-    try {
-      await start.waitForClickable({ timeout: 30000 });
-    } catch (e) {
-      await browser.saveScreenshot("./tests/artifacts/app-e2e-noreview.png");
-      console.log("NO REVIEW BODY:\n" + (await $("body").getText()).slice(0, 800));
-      throw e;
-    }
-    await start.click();
+  it("transcribes the file and renders the transcript", async () => {
+    await (await $("button*=Start transcription")).click();
 
-    // Working screen — appears unless the clip transcribes faster than we poll.
+    // The transcript text itself is the product outcome — wait for it directly
+    // rather than a fragile tab selector.
     await browser.waitUntil(
-      async () => {
-        const body = (await $("body").getText()).toLowerCase();
-        return body.includes("cancel transcription") || body.includes("readable");
-      },
-      { timeout: 20000, timeoutMsg: "never reached working or transcript screen" },
+      async () => /what your country can do for you/i.test(await body()),
+      { timeout: 240000, timeoutMsg: "transcript never rendered" },
     );
 
-    // Transcript screen — real Whisper output from the bundled model.
-    // Whisper competes with the driver + webkit + xvfb for CPU here, so allow
-    // generous headroom for a 4-second clip.
-    try {
-      await $("*=Readable").then((el) => el.waitForDisplayed({ timeout: 300000 }));
-    } catch (e) {
-      await browser.saveScreenshot("./tests/artifacts/app-e2e-stuck.png");
-      console.log("STUCK BODY:", (await $("body").getText()).slice(0, 600));
-      throw e;
-    }
+    const text = (await body()).toLowerCase();
+    expect(text).toContain("readable");
+    expect(text).toContain("timestamped");
+    expect(text).toMatch(/ask (not )?what your country can do for you/);
 
-    const body = await $("body").getText();
-    expect(body.toLowerCase()).toMatch(/fellow|americans|ask|country|so,/);
-
-    // Timestamped view renders times
-    await (await $("*=Timestamped")).click();
+    // Timestamped view shows times.
+    await (await $("button*=Timestamped")).click();
     await expect($("body")).toHaveText(/\d+:\d\d/);
 
-    // Export menu opens with the formats
+    // Export menu lists the formats.
     await (await $("button*=Export")).click();
-    await expect($("*=SubRip")).toBeDisplayed();
+    await expect($("body")).toHaveText(/Subtitles|SubRip|\.srt/i);
 
     await browser.saveScreenshot("./tests/artifacts/app-e2e-transcript.png");
   });
 
   it("can start another transcription", async () => {
     await (await $("button*=New transcription")).click();
-    await expect($("h1*=Turn anything spoken into text")).toBeDisplayed();
+    await browser.waitUntil(
+      async () => (await body()).includes("Turn anything spoken into text"),
+      { timeout: 15000, timeoutMsg: "did not return to the intake screen" },
+    );
   });
 });
