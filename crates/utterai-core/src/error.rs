@@ -44,6 +44,9 @@ pub enum CoreError {
     #[error("transcription failed: {0}")]
     Transcription(String),
 
+    #[error("no speech was found in the selected audio")]
+    NoSpeech,
+
     #[error("the operation was cancelled")]
     Cancelled,
 
@@ -71,6 +74,7 @@ impl CoreError {
             CoreError::ChecksumMismatch { .. } => "checksum_mismatch",
             CoreError::LowDiskSpace { .. } => "low_disk_space",
             CoreError::Transcription(_) => "transcription_failed",
+            CoreError::NoSpeech => "no_speech",
             CoreError::Cancelled => "cancelled",
             CoreError::Io(_) => "io_error",
             CoreError::Other(_) => "unexpected",
@@ -147,6 +151,11 @@ impl CoreError {
                 "The transcription failed",
                 "Something went wrong while transcribing. Your file was not changed.".into(),
                 vec!["Try again", "Try a different model", "Enable developer mode for details"],
+            ),
+            CoreError::NoSpeech => (
+                "No speech to transcribe",
+                "UtterAI didn't find any spoken words in the part of the audio you selected. It may be silent, music-only, or a very short clip.".into(),
+                vec!["Pick a different range", "Try a larger model", "Check the file plays with sound"],
             ),
             CoreError::Cancelled => (
                 "Transcription cancelled",

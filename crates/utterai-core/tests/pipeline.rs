@@ -53,14 +53,15 @@ fn transcribes_jfk_sample() {
         .canonicalize()
         .expect("fixture present");
 
+    // language: None exercises the auto-detect path, which is the default UX.
     let req = TranscribeRequest {
         input: fixture,
         range: None,
         model_path: model,
         model_id: "tiny".into(),
-        language: Some("en".into()),
+        language: None,
         translate: false,
-        threads: 2,
+        threads: 4,
     };
 
     let events = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
@@ -103,6 +104,52 @@ fn transcribes_jfk_sample() {
     let stages = events.lock().unwrap().clone();
     assert!(stages.iter().any(|s| s.contains("Extracting")));
     assert!(stages.iter().any(|s| s.contains("Transcribing")));
+}
+
+#[test]
+fn reports_no_speech_for_silent_audio() {
+    let Ok(model) = std::env::var("UTTERAI_TEST_MODEL") else {
+        return;
+    };
+    let fixture =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/generated/silence.wav");
+    if !fixture.exists() {
+        eprintln!("skipping: run scripts/make-fixtures.sh first");
+        return;
+    }
+    let req = TranscribeRequest {
+        input: fixture,
+        range: None,
+        model_path: PathBuf::from(model),
+        model_id: "tiny".into(),
+        language: Some("en".into()),
+        translate: false,
+        threads: 2,
+    };
+    let result = transcribe(
+        &req,
+        &tool("ffmpeg"),
+        &tool("ffprobe"),
+        Arc::new(AtomicBool::new(false)),
+        Arc::new(|_| {}),
+    );
+    match result {
+        Err(e) => assert_eq!(e.to_user().code, "no_speech"),
+        // Whisper occasionally hallucinates a token on pure silence; tolerate a
+        // trivially-short result but never a real sentence.
+        Ok(t) => {
+            let words: usize = t
+                .segments
+                .iter()
+                .map(|s| s.text.split_whitespace().count())
+                .sum();
+            assert!(
+                words <= 3,
+                "silence produced {words} words: {:?}",
+                t.segments
+            );
+        }
+    }
 }
 
 #[test]

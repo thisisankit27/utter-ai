@@ -79,13 +79,13 @@ export const api = {
 };
 
 export function onJobUpdate(cb: (u: JobUpdate) => void): Promise<UnlistenFn> {
-  return listen<JobUpdate>("transcription://update", (e) => cb(e.payload));
+  return listen<JobUpdate>("transcription-update", (e) => cb(e.payload));
 }
 
 export function onModelDownloadProgress(
   cb: (p: ModelDownloadProgress) => void,
 ): Promise<UnlistenFn> {
-  return listen<ModelDownloadProgress>("model://download-progress", (e) =>
+  return listen<ModelDownloadProgress>("model-download-progress", (e) =>
     cb(e.payload),
   );
 }
@@ -93,7 +93,7 @@ export function onModelDownloadProgress(
 export function onModelDownloadDone(
   cb: (id: string) => void,
 ): Promise<UnlistenFn> {
-  return listen<{ id: string }>("model://download-done", (e) =>
+  return listen<{ id: string }>("model-download-done", (e) =>
     cb(e.payload.id),
   );
 }

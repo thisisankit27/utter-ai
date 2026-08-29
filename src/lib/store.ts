@@ -90,6 +90,12 @@ interface AppStore {
 let jobUnlisten: (() => void) | null = null;
 let toastSeq = 0;
 
+/** Small unique id — avoids `crypto.randomUUID`, which is undefined in some
+ *  webviews where the app origin isn't treated as a secure context. */
+function newLocalId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export const useStore = create<AppStore>((set, get) => ({
   ready: false,
   route: "intake",
@@ -267,11 +273,9 @@ export const useStore = create<AppStore>((set, get) => ({
     const { media, range, transcript } = get();
     if (!media || !transcript) return;
     const entry: HistoryEntry = {
-      id: get().activeEntryId ?? crypto.randomUUID(),
+      id: get().activeEntryId ?? newLocalId(),
       source_path: media.path,
-      source_name: media.info.kind_label
-        ? transcript.source_name
-        : transcript.source_name,
+      source_name: transcript.source_name,
       created_at: Math.floor(Date.now() / 1000),
       duration: transcript.duration,
       range,

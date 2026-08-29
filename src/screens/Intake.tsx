@@ -33,7 +33,7 @@ export function Intake() {
         <h1 className="text-balance text-3xl leading-tight sm:text-[2.1rem]">
           Turn anything spoken into text.
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-pretty text-[15px] leading-relaxed text-muted">
+        <p className="mx-auto mt-3 max-w-[32rem] text-pretty text-[15px] leading-relaxed text-muted">
           Drop in an interview, lecture, podcast or voice memo. UtterAI
           transcribes it right here on your computer — no account, no upload.
         </p>

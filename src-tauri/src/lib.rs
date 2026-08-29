@@ -168,7 +168,7 @@ async fn download_model(
     let id2 = id.clone();
     let result = model::download(spec, &cancel, move |p: DownloadProgress| {
         let _ = app2.emit(
-            "model://download-progress",
+            "model-download-progress",
             serde_json::json!({
                 "id": id2,
                 "received": p.received_bytes,
@@ -182,7 +182,7 @@ async fn download_model(
     *state.download_cancel.lock() = None;
     match result {
         Ok(_) => {
-            let _ = app.emit("model://download-done", serde_json::json!({ "id": id }));
+            let _ = app.emit("model-download-done", serde_json::json!({ "id": id }));
             Ok(())
         }
         Err(e) => Err(e.to_user()),
@@ -265,15 +265,36 @@ fn run_job(
 ) {
     // Overall-progress model: extraction 0..15%, transcription 15..96%, finalize 96..100%.
     let progress_state = Arc::new(Mutex::new(ProgressModel::default()));
+    // Whisper fires its progress/segment callbacks very frequently. The UI only
+    // needs a few updates a second, and every emit is an IPC round-trip, so we
+    // coalesce: a plain progress tick is dropped if the last emit was <120ms
+    // ago; stage changes and partial-segment lines always go through.
+    let last_emit = Arc::new(Mutex::new(std::time::Instant::now()));
 
     let app_sink = app.clone();
     let job_sink = job_id.clone();
     let pstate = progress_state.clone();
+    let last_emit_c = last_emit.clone();
     let sink: utterai_core::transcribe::EventSink = Arc::new(move |ev: TranscribeEvent| {
-        let mut pm = pstate.lock();
-        let (overall, stage, note, partial) = pm.apply(ev);
+        let important = matches!(
+            ev,
+            TranscribeEvent::Stage { .. } | TranscribeEvent::PartialSegment { .. }
+        );
+        let (overall, stage, note, partial) = {
+            let mut pm = pstate.lock();
+            pm.apply(ev)
+        };
+        if !important {
+            let mut last = last_emit_c.lock();
+            if last.elapsed().as_millis() < 120 {
+                return;
+            }
+            *last = std::time::Instant::now();
+        } else {
+            *last_emit_c.lock() = std::time::Instant::now();
+        }
         let _ = app_sink.emit(
-            "transcription://update",
+            "transcription-update",
             JobUpdate::Progress {
                 job_id: job_sink.clone(),
                 overall,
@@ -284,32 +305,40 @@ fn run_job(
         );
     });
 
-    let outcome = utterai_core::transcribe::transcribe(&req, &sc.ffmpeg, &sc.ffprobe, cancel, sink);
+    tracing::info!(%job_id, "transcription job started");
+    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        utterai_core::transcribe::transcribe(&req, &sc.ffmpeg, &sc.ffprobe, cancel, sink)
+    }))
+    .unwrap_or_else(|_| {
+        Err(utterai_core::CoreError::Other(
+            "the transcription engine crashed".into(),
+        ))
+    });
 
     // Job is finished either way — drop its cancel handle.
     if let Some(state) = app.try_state::<AppState>() {
         state.jobs.lock().remove(&job_id);
     }
 
-    match outcome {
+    let update = match outcome {
         Ok(transcript) => {
-            let _ = app.emit(
-                "transcription://update",
-                JobUpdate::Done {
-                    job_id,
-                    transcript: Box::new(transcript),
-                },
-            );
+            tracing::info!(%job_id, "transcription job done, emitting result");
+            JobUpdate::Done {
+                job_id: job_id.clone(),
+                transcript: Box::new(transcript),
+            }
         }
         Err(err) => {
-            let _ = app.emit(
-                "transcription://update",
-                JobUpdate::Failed {
-                    job_id,
-                    error: err.to_user(),
-                },
-            );
+            tracing::warn!(%job_id, error = %err, "transcription job failed");
+            JobUpdate::Failed {
+                job_id: job_id.clone(),
+                error: err.to_user(),
+            }
         }
+    };
+    match app.emit("transcription-update", update) {
+        Ok(()) => tracing::info!(%job_id, "final job update emitted"),
+        Err(e) => tracing::error!(%job_id, error = %e, "failed to emit final job update"),
     }
 }
 
@@ -460,15 +489,20 @@ fn cancel_transcription(state: State<AppState>, job_id: String) {
     }
 }
 
-/// Test hook: when `UTTERAI_E2E=1`, returns the path in `UTTERAI_E2E_FILE` so the
-/// end-to-end suite can load media without driving the native file dialog.
+/// Test hook: the end-to-end suite writes a media path to a sentinel file
+/// (`$UTTERAI_E2E_FILE` or the OS temp dir) and the UI loads it on boot,
+/// avoiding the native file dialog. Returns `None` in a normal run.
 #[tauri::command]
 fn e2e_autoload() -> Option<String> {
-    if std::env::var("UTTERAI_E2E").as_deref() == Ok("1") {
-        std::env::var("UTTERAI_E2E_FILE").ok()
-    } else {
-        None
+    let sentinel = std::env::var("UTTERAI_E2E_FILE")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|_| std::env::temp_dir().join("utterai-e2e-autoload"));
+    let path = std::fs::read_to_string(&sentinel).ok()?;
+    let path = path.trim();
+    if path.is_empty() || !std::path::Path::new(path).is_file() {
+        return None;
     }
+    Some(path.to_string())
 }
 
 #[tauri::command]

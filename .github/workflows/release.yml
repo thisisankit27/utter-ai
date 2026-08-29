@@ -82,11 +82,15 @@ jobs:
         shell: bash
         run: |
           set -e
-          cd src-tauri/target/release/bundle || cd target/release/bundle
-          find . -type f \( -name '*.deb' -o -name '*.AppImage' -o -name '*.exe' -o -name '*.msi' \) \
-            -exec sha256sum {} + | sed 's#\./##' > "checksums-${{ matrix.triple }}.txt"
-          cat "checksums-${{ matrix.triple }}.txt"
-          gh release upload "${{ env.TAG }}" "checksums-${{ matrix.triple }}.txt" --clobber
+          out="checksums-${{ matrix.triple }}.txt"
+          : > "$out"
+          while IFS= read -r f; do
+            ( cd "$(dirname "$f")" && sha256sum "$(basename "$f")" ) >> "$PWD/$out"
+          done < <(find . -type f \( -name '*.deb' -o -name '*.AppImage' \
+                     -o -name '*-setup.exe' -o -name '*.msi' \) 2>/dev/null)
+          echo "--- $out ---"; cat "$out"
+          test -s "$out"
+          gh release upload "${{ env.TAG }}" "$out" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
