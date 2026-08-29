@@ -17,7 +17,7 @@ tracing = "0.1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "fs", "process", "io-util", "time"] }
 
 [profile.release]
-codegen-units = 1
+codegen-units = 16
 lto = "thin"
 opt-level = 3
 strip = true
