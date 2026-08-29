@@ -176,14 +176,15 @@ pub fn transcribe(
     });
 
     let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
-    params.set_n_threads(req.threads.max(1) as i32);
+    params.set_n_threads(req.threads.clamp(1, 8) as i32);
     params.set_translate(req.translate);
-    match &req.language {
-        Some(lang) if lang != "auto" => params.set_language(Some(lang.as_str())),
-        _ => {
-            params.set_language(Some("auto"));
-            params.set_detect_language(true);
+    match req.language.as_deref() {
+        Some(lang) if !lang.is_empty() && lang != "auto" => {
+            params.set_language(Some(lang));
         }
+        // Auto-detect. NOTE: do *not* call set_detect_language(true) — that makes
+        // whisper.cpp detect the language and return without transcribing.
+        _ => params.set_language(Some("auto")),
     }
     params.set_print_special(false);
     params.set_print_progress(false);
@@ -193,8 +194,16 @@ pub fn transcribe(
     params.set_token_timestamps(true);
     params.set_split_on_word(true);
     // Keep individual segments to roughly one caption line.
-    params.set_max_len(80);
+    params.set_max_len(60);
     params.enable_vad(false);
+
+    tracing::debug!(
+        samples = samples.len(),
+        secs = samples.len() as f64 / audio::WHISPER_SAMPLE_RATE as f64,
+        threads = req.threads,
+        lang = ?req.language,
+        "starting whisper.full()"
+    );
 
     {
         let sink = sink.clone();

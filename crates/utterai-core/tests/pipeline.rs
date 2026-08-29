@@ -53,14 +53,15 @@ fn transcribes_jfk_sample() {
         .canonicalize()
         .expect("fixture present");
 
+    // language: None exercises the auto-detect path, which is the default UX.
     let req = TranscribeRequest {
         input: fixture,
         range: None,
         model_path: model,
         model_id: "tiny".into(),
-        language: Some("en".into()),
+        language: None,
         translate: false,
-        threads: 2,
+        threads: 4,
     };
 
     let events = Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
@@ -137,8 +138,16 @@ fn reports_no_speech_for_silent_audio() {
         // Whisper occasionally hallucinates a token on pure silence; tolerate a
         // trivially-short result but never a real sentence.
         Ok(t) => {
-            let words: usize = t.segments.iter().map(|s| s.text.split_whitespace().count()).sum();
-            assert!(words <= 3, "silence produced {words} words: {:?}", t.segments);
+            let words: usize = t
+                .segments
+                .iter()
+                .map(|s| s.text.split_whitespace().count())
+                .sum();
+            assert!(
+                words <= 3,
+                "silence produced {words} words: {:?}",
+                t.segments
+            );
         }
     }
 }
