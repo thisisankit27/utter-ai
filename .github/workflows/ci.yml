@@ -16,8 +16,8 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -33,12 +33,12 @@ jobs:
   engine:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: System dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends cmake clang libclang-dev ffmpeg
-      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: dtolnay/rust-toolchain@1.100.0
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
@@ -46,7 +46,7 @@ jobs:
       - run: cargo clippy -p utterai-core --all-targets -- -D warnings
       - name: Cache tiny model for the pipeline test
         id: model
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/utterai/ggml-tiny-q5_1.bin
           key: ggml-tiny-q5_1
@@ -65,7 +65,7 @@ jobs:
   app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: System dependencies
         run: |
           sudo apt-get update
@@ -74,9 +74,9 @@ jobs:
             libgtk-3-dev libsoup-3.0-dev librsvg2-dev \
             libayatana-appindicator3-dev libasound2-dev \
             cmake clang libclang-dev patchelf
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
-      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: dtolnay/rust-toolchain@1.100.0
         with: { components: clippy }
       - uses: Swatinem/rust-cache@v2
         with: { workspaces: ". -> target" }
