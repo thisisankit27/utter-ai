@@ -20,7 +20,7 @@ pub use error::{CoreError, Result, UserError};
 pub use export::ExportFormat;
 pub use media::MediaInfo;
 pub use model::{ModelSpec, MODELS};
-pub use transcribe::{Segment, Transcript, TranscribeEvent, TranscribeRequest};
+pub use transcribe::{Segment, TranscribeEvent, TranscribeRequest, Transcript};
 
 /// `H:MM:SS` (or `MM:SS`) — shared with the exporters and surfaced in errors.
 pub fn format_hms(secs: f64) -> String {

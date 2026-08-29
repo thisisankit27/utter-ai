@@ -54,10 +54,14 @@ pub fn extract_range(
             "-vn", // drop video
             "-sn", // drop subtitles
             "-dn", // drop data streams
-            "-ac", "1",
-            "-ar", &WHISPER_SAMPLE_RATE.to_string(),
-            "-c:a", "pcm_s16le",
-            "-f", "wav",
+            "-ac",
+            "1",
+            "-ar",
+            &WHISPER_SAMPLE_RATE.to_string(),
+            "-c:a",
+            "pcm_s16le",
+            "-f",
+            "wav",
         ])
         .arg(out)
         .args(["-progress", "pipe:1", "-nostats", "-loglevel", "error"])
@@ -119,8 +123,9 @@ pub fn extract_range(
 /// The file we feed here is one we just wrote with ffmpeg, so it is always
 /// 16 kHz mono `pcm_s16le`; the extra branches are defensive.
 pub fn read_wav_mono_f32(path: &Path) -> Result<Vec<f32>> {
-    let mut reader = hound::WavReader::open(path)
-        .map_err(|e| CoreError::CorruptMedia { detail: e.to_string() })?;
+    let mut reader = hound::WavReader::open(path).map_err(|e| CoreError::CorruptMedia {
+        detail: e.to_string(),
+    })?;
     let spec = reader.spec();
 
     let raw: Vec<f32> = match spec.sample_format {
@@ -130,12 +135,16 @@ pub fn read_wav_mono_f32(path: &Path) -> Result<Vec<f32>> {
                 .samples::<i32>()
                 .map(|s| s.map(|v| v as f32 / max))
                 .collect::<std::result::Result<_, _>>()
-                .map_err(|e| CoreError::CorruptMedia { detail: e.to_string() })?
+                .map_err(|e| CoreError::CorruptMedia {
+                    detail: e.to_string(),
+                })?
         }
         hound::SampleFormat::Float => reader
             .samples::<f32>()
             .collect::<std::result::Result<_, _>>()
-            .map_err(|e| CoreError::CorruptMedia { detail: e.to_string() })?,
+            .map_err(|e| CoreError::CorruptMedia {
+                detail: e.to_string(),
+            })?,
     };
 
     let mono = if spec.channels <= 1 {
@@ -148,7 +157,11 @@ pub fn read_wav_mono_f32(path: &Path) -> Result<Vec<f32>> {
     };
 
     if spec.sample_rate != WHISPER_SAMPLE_RATE {
-        return Ok(resample_linear(&mono, spec.sample_rate, WHISPER_SAMPLE_RATE));
+        return Ok(resample_linear(
+            &mono,
+            spec.sample_rate,
+            WHISPER_SAMPLE_RATE,
+        ));
     }
     Ok(mono)
 }

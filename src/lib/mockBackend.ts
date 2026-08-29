@@ -25,27 +25,46 @@ function emit(event: string, payload: unknown) {
   listeners.get(event)?.forEach((h) => h(payload));
 }
 
-const JFK_LINES: [number, number, string][] = [
-  [0.0, 3.5, "And so, my fellow Americans,"],
-  [3.5, 6.4, "ask not what your country can do for you —"],
-  [6.4, 10.9, "ask what you can do for your country."],
+// A realistic-looking interview transcript for the mock. The first lines are
+// streamed as the "live preview" during a mock job.
+const MOCK_LINES: [number, number, string][] = [
+  [0.0, 4.2, "Thanks for making the time this morning. Can you walk me through how the pilot started?"],
+  [4.6, 11.0, "Of course. Last spring the council set aside a small budget to test whether we could cut response times on the east side."],
+  [11.4, 17.2, "We weren't sure it would work, honestly. The area had been underserved for years and people had stopped calling."],
+  [17.8, 23.9, "So the first thing we did was go door to door and just ask residents what they actually needed."],
+  [24.4, 30.1, "What surprised you the most about those conversations?"],
+  [30.6, 38.4, "How specific people were. It wasn't abstract. One family could tell you exactly which four minutes of the afternoon were the problem."],
+  [39.0, 45.2, "And when you cut through that, the fix was usually smaller than we expected — a signal timing, a staffing overlap."],
+  [45.8, 52.6, "The lesson we keep coming back to is: process only what you need to, and let the people closest to it tell you where to look."],
+  [53.2, 58.9, "That's the same principle we brought to how we report the results back to the neighbourhood."],
+  [59.4, 64.0, "So, in a sense — ask what you can do for your country, one street at a time."],
 ];
 
 function buildTranscript(name: string, dur: number, offset: number): Transcript {
-  const segs = JFK_LINES.map(([s, e, text]) => ({
+  const segs = MOCK_LINES.map(([s, e, text]) => ({
     start: s + offset,
     end: e + offset,
     text,
   }));
+  // Group into a few paragraphs on the larger gaps.
+  const paragraphs: { start: number; end: number; text: string }[] = [];
+  let cur: { start: number; end: number; text: string } | null = null;
+  for (const seg of segs) {
+    if (cur && seg.start - cur.end > 0.45 && cur.text.length > 110) {
+      paragraphs.push(cur);
+      cur = null;
+    }
+    if (!cur) cur = { start: seg.start, end: seg.end, text: seg.text };
+    else {
+      cur.text += " " + seg.text;
+      cur.end = seg.end;
+    }
+  }
+  if (cur) paragraphs.push(cur);
+
   return {
     segments: segs,
-    paragraphs: [
-      {
-        start: offset,
-        end: offset + 10.9,
-        text: JFK_LINES.map((l) => l[2]).join(" "),
-      },
-    ],
+    paragraphs,
     language: "en",
     model_id: "base",
     duration: dur,
@@ -231,18 +250,19 @@ function runMockJob(jobId: string, name: string, dur: number, offset: number) {
       return;
     }
     const seg = i - steps.length;
-    if (seg < JFK_LINES.length) {
-      const [s, e, text] = JFK_LINES[seg];
+    const previewCount = Math.min(6, MOCK_LINES.length);
+    if (seg < previewCount) {
+      const [s, e, text] = MOCK_LINES[seg];
       emit("transcription://update", {
         phase: "progress",
         job_id: jobId,
-        overall: 0.17 + ((seg + 1) / JFK_LINES.length) * 0.79,
+        overall: 0.17 + ((seg + 1) / previewCount) * 0.79,
         stage: "transcribing",
         note: "Transcribing",
         partial: { start: s + offset, end: e + offset, text },
       });
       i++;
-      setTimeout(tick, 650);
+      setTimeout(tick, 380);
       return;
     }
     emit("transcription://update", { phase: "progress", job_id: jobId, overall: 0.99, stage: "finalizing", note: "Tidying up the transcript", partial: null });

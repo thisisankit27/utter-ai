@@ -1,0 +1,56 @@
+name: App E2E
+
+# Full walkthrough of the packaged binary via tauri-driver. Slow (release
+# build + real Whisper), so it runs on master and on demand rather than on
+# every PR — the PR `app` job already proves the bundle builds.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "crates/**"
+      - "src-tauri/**"
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  walkthrough:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: System dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libjavascriptcoregtk-4.1-dev \
+            libgtk-3-dev libsoup-3.0-dev librsvg2-dev \
+            libayatana-appindicator3-dev libasound2-dev \
+            cmake clang libclang-dev patchelf \
+            webkit2gtk-driver xvfb ffmpeg
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: ". -> target" }
+      - run: npm ci
+      - run: cargo install tauri-driver --locked
+      - run: bash scripts/fetch-binaries.sh
+      - name: Bundled model
+        run: |
+          curl -fL -o src-tauri/resources/models/ggml-base-q5_1.bin \
+            https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q5_1.bin
+      - run: npm run build
+      - run: cargo build --release -p utterai
+      - name: Provide the model to the app data dir
+        run: |
+          mkdir -p ~/.local/share/UtterAI/models
+          cp src-tauri/resources/models/ggml-base-q5_1.bin ~/.local/share/UtterAI/models/
+      - name: Walkthrough
+        run: xvfb-run -a --server-args="-screen 0 1280x900x24" npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-screenshots
+          path: tests/artifacts/
+          if-no-files-found: ignore

@@ -27,8 +27,8 @@
   --surface-2: #f0f1f5;
   --border: #e2e4ea;
   --text: #16171b;
-  --muted: #5c5f6a;
-  --faint: #8a8d99;
+  --muted: #53565d;
+  --faint: #64676f;
   --iris: #5b54e8;
   --iris-2: #8f8af2;
   --teal: #12a594;
@@ -97,7 +97,7 @@ h3 {
 .wrap {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 0 24px;
+  padding-inline: 24px;
 }
 .eyebrow {
   font-size: 0.78rem;
@@ -194,9 +194,51 @@ header.nav.scrolled {
   padding: 9px 16px;
   font-size: 0.88rem;
 }
+.nav-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px;
+  color: var(--text);
+  cursor: pointer;
+}
 @media (max-width: 760px) {
+  .nav-toggle {
+    display: inline-flex;
+  }
+  .nav-links {
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 12px 24px 20px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    transform: translateY(-8px);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 0.16s ease,
+      transform 0.16s ease;
+  }
+  .nav-links.open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
   .nav-links a:not(.btn) {
-    display: none;
+    padding: 10px 4px;
+    font-size: 0.98rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-links .btn {
+    margin-top: 8px;
+    justify-content: center;
   }
 }
 
@@ -280,13 +322,21 @@ header.nav.scrolled {
   border-radius: 999px;
   background: var(--border);
 }
+.frame picture {
+  display: block;
+  aspect-ratio: 1160 / 745;
+}
 .frame img {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
 }
 
 /* sections */
 section {
-  padding: 80px 0;
+  padding-block: 80px;
 }
 .section-head {
   max-width: 40ch;
@@ -364,6 +414,16 @@ section {
   overflow: hidden;
   background: var(--surface-2);
   box-shadow: var(--shadow);
+  align-self: center;
+  aspect-ratio: 1160 / 745;
+}
+.step-media img,
+.step-media picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
 }
 
 .formats {
@@ -520,7 +580,8 @@ footer a:hover {
     opacity 0.6s ease,
     transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.reveal.in {
+.reveal.in,
+.no-js .reveal {
   opacity: 1;
   transform: none;
 }

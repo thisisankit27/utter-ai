@@ -49,7 +49,8 @@ test("full journey: intake → range → transcribe → transcript → export", 
   await page.getByRole("button", { name: /start transcription/i }).click();
 
   // Working screen — real staged progress
-  await expect(page.getByText(/preparing the audio|checking the file/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: /cancel transcription/i })).toBeVisible();
+  await expect(page.getByText(/%$/).first()).toBeVisible();
   await expect(page.getByText(/live preview/i)).toBeVisible({ timeout: 15_000 });
 
   // Transcript screen
@@ -62,9 +63,9 @@ test("full journey: intake → range → transcribe → transcript → export", 
   await page.getByRole("radio", { name: "Timestamped" }).click();
   await expect(page.locator("text=/00:0[0-9]/").first()).toBeVisible();
 
-  // search
+  // search highlights matches
   await page.getByPlaceholder(/search/i).fill("country");
-  await expect(page.getByText(/\d+ found/i)).toBeVisible();
+  await expect(page.locator("mark", { hasText: /country/i }).first()).toBeVisible();
 
   // export menu opens and lists formats
   await page.getByRole("button", { name: /export/i }).click();
@@ -98,5 +99,7 @@ test("history records a finished transcript", async ({ page }) => {
 
   await page.getByRole("button", { name: "History" }).click();
   await expect(page.getByRole("heading", { name: "History" })).toBeVisible();
-  await expect(page.getByText("lecture.mp3")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /lecture\.mp3/ }).first(),
+  ).toBeVisible();
 });

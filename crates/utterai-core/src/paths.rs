@@ -40,9 +40,10 @@ pub fn sweep_temp() -> usize {
     let mut removed = 0;
     if let Ok(entries) = std::fs::read_dir(temp_dir()) {
         for entry in entries.flatten() {
-            if std::fs::remove_file(entry.path()).is_ok() {
-                removed += 1;
-            } else if std::fs::remove_dir_all(entry.path()).is_ok() {
+            let path = entry.path();
+            let gone =
+                std::fs::remove_file(&path).is_ok() || std::fs::remove_dir_all(&path).is_ok();
+            if gone {
                 removed += 1;
             }
         }

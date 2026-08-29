@@ -18,9 +18,7 @@ pub fn captionize(raw: &[Segment]) -> Vec<Segment> {
         if text.is_empty() {
             continue;
         }
-        if text.chars().count() <= MAX_CAPTION_CHARS
-            && (seg.end - seg.start) <= MAX_CAPTION_SECS
-        {
+        if text.chars().count() <= MAX_CAPTION_CHARS && (seg.end - seg.start) <= MAX_CAPTION_SECS {
             push_or_merge(&mut out, seg.start, seg.end, &text);
             continue;
         }
@@ -158,7 +156,11 @@ mod tests {
     use super::*;
 
     fn seg(start: f64, end: f64, text: &str) -> Segment {
-        Segment { start, end, text: text.into() }
+        Segment {
+            start,
+            end,
+            text: text.into(),
+        }
     }
 
     #[test]
@@ -167,7 +169,9 @@ mod tests {
                     caption length. And then another full sentence follows it here.";
         let out = captionize(&[seg(0.0, 12.0, long)]);
         assert!(out.len() >= 2);
-        assert!(out.iter().all(|s| s.text.chars().count() <= MAX_CAPTION_CHARS + 4));
+        assert!(out
+            .iter()
+            .all(|s| s.text.chars().count() <= MAX_CAPTION_CHARS + 4));
         // Timestamps stay ordered and within the source span.
         assert!(out.first().unwrap().start >= 0.0);
         assert!(out.last().unwrap().end <= 12.0 + 1e-6);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaSrc } from "@/lib/platform";
-import { useStore } from "@/lib/store";
+import { useStore, type Media } from "@/lib/store";
 import { clock } from "@/lib/format";
 import { LANGUAGES } from "@/lib/format";
 import { SpeechRibbon, extractPeaks } from "@/components/SpeechRibbon";
@@ -13,7 +13,12 @@ import {
 } from "@/components/icons";
 
 export function Review() {
-  const media = useStore((s) => s.media)!;
+  const media = useStore((s) => s.media);
+  if (!media) return null;
+  return <ReviewInner media={media} />;
+}
+
+function ReviewInner({ media }: { media: Media }) {
   const range = useStore((s) => s.range);
   const setRange = useStore((s) => s.setRange);
   const start = useStore((s) => s.start);

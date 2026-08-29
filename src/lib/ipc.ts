@@ -73,6 +73,9 @@ export const api = {
   clearHistory: () => invoke<void>("clear_history"),
 
   clearCache: () => invoke<number>("clear_cache"),
+
+  e2eAutoload: () =>
+    MOCK ? Promise.resolve(null) : invoke<string | null>("e2e_autoload"),
 };
 
 export function onJobUpdate(cb: (u: JobUpdate) => void): Promise<UnlistenFn> {

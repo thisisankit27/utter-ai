@@ -7,6 +7,20 @@ const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 8);
 onScroll();
 addEventListener("scroll", onScroll, { passive: true });
 
+/* mobile menu */
+const navToggle = document.getElementById("nav-toggle");
+const navLinks = document.getElementById("nav-links");
+const setMenu = (open) => {
+  navLinks.classList.toggle("open", open);
+  navToggle.setAttribute("aria-expanded", String(open));
+};
+navToggle.addEventListener("click", () =>
+  setMenu(navToggle.getAttribute("aria-expanded") !== "true"),
+);
+navLinks.addEventListener("click", (e) => {
+  if (e.target.tagName === "A") setMenu(false);
+});
+
 /* scroll reveal */
 const io = new IntersectionObserver(
   (entries) => {

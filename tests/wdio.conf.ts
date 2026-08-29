@@ -1,17 +1,22 @@
-import { spawn, spawnSync, type ChildProcess } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * End-to-end walkthrough of the packaged app using tauri-driver.
  *
- * Requires: a release build at src-tauri/target/release/utterai, `tauri-driver`
- * on PATH (`cargo install tauri-driver`), and WebKitWebDriver (Linux). CI runs
- * this under xvfb.
+ * Requires: a release build at target/release/utterai, `tauri-driver`
+ * on PATH (`cargo install tauri-driver`), and WebKitWebDriver (Linux). Run under
+ * xvfb. The app auto-loads UTTERAI_E2E_FILE on boot.
  */
+const ROOT = path.resolve(__dirname, "..");
 const APP =
-  process.env.UTTERAI_BIN ||
-  path.resolve(__dirname, "../src-tauri/target/release/utterai");
+  process.env.UTTERAI_BIN || path.join(ROOT, "target/release/utterai");
+const FIXTURE =
+  process.env.UTTERAI_E2E_FILE || path.join(ROOT, "fixtures/jfk-4s.wav");
 
 let tauriDriver: ChildProcess;
 
@@ -23,7 +28,6 @@ export const config: WebdriverIO.Config = {
     {
       // @ts-expect-error tauri-specific capability
       "tauri:options": { application: APP },
-      browserName: "wry",
     },
   ],
   hostname: "127.0.0.1",
@@ -31,7 +35,7 @@ export const config: WebdriverIO.Config = {
   logLevel: "warn",
   framework: "mocha",
   reporters: ["spec"],
-  mochaOpts: { ui: "bdd", timeout: 180_000 },
+  mochaOpts: { ui: "bdd", timeout: 420_000 },
   autoCompileOpts: {
     autoCompile: true,
     tsNodeOpts: { transpileOnly: true, project: "./tests/tsconfig.json" },
@@ -43,18 +47,26 @@ export const config: WebdriverIO.Config = {
         `App binary not found at ${APP}. Run: npm run tauri build -- --bundles deb`,
       );
     }
+    fs.mkdirSync(path.join(ROOT, "tests/artifacts"), { recursive: true });
+    process.env.UTTERAI_E2E = "1";
+    process.env.UTTERAI_E2E_FILE = FIXTURE;
   },
   beforeSession: () => {
-    tauriDriver = spawn("tauri-driver", [], {
-      stdio: [null, process.stdout, process.stderr],
-    });
+    const nativeDriver =
+      process.env.NATIVE_DRIVER ||
+      (process.platform === "win32"
+        ? "msedgedriver"
+        : "/usr/bin/WebKitWebDriver");
+    tauriDriver = spawn(
+      "tauri-driver",
+      ["--port", "4444", "--native-driver", nativeDriver],
+      {
+        stdio: [null, process.stdout, process.stderr],
+        env: { ...process.env, UTTERAI_E2E: "1", UTTERAI_E2E_FILE: FIXTURE },
+      },
+    );
   },
   afterSession: () => {
     tauriDriver?.kill();
   },
 };
-
-// Fail fast with a clear message if tauri-driver is missing.
-if (spawnSync("tauri-driver", ["--help"]).error) {
-  console.error("tauri-driver not found — install with: cargo install tauri-driver");
-}

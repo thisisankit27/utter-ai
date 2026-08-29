@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { mediaSrc, saveFileDialog } from "@/lib/platform";
-import { useStore } from "@/lib/store";
+import { useStore, type Media } from "@/lib/store";
 import { api } from "@/lib/ipc";
 import { clock, clockMs, languageName } from "@/lib/format";
 import type { Segment, Transcript } from "@/lib/types";
@@ -25,8 +25,19 @@ const FORMATS: { id: string; label: string }[] = [
 ];
 
 export function TranscriptView() {
-  const stored = useStore((s) => s.transcript)!;
+  const stored = useStore((s) => s.transcript);
   const media = useStore((s) => s.media);
+  if (!stored) return null;
+  return <TranscriptInner stored={stored} media={media} />;
+}
+
+function TranscriptInner({
+  stored,
+  media,
+}: {
+  stored: Transcript;
+  media: Media | null;
+}) {
   const reset = useStore((s) => s.reset);
   const toast = useStore((s) => s.toast);
   const saveHistory = useStore((s) => s.saveCurrentToHistory);
@@ -210,7 +221,13 @@ export function TranscriptView() {
         ref={listRef}
         className="mt-3 flex-1 overflow-y-auto rounded-2xl border border-border bg-surface"
       >
-        <div className={view === "readable" ? "space-y-4 p-5" : "divide-y divide-border/60"}>
+        <div
+          className={
+            view === "readable"
+              ? "space-y-3 py-5 pl-16 pr-6"
+              : "divide-y divide-border/60"
+          }
+        >
           {rows.map((row, i) => (
             <Row
               key={i}
@@ -299,18 +316,22 @@ function Row({
   }
 
   return (
-    <p
+    <div
       data-row={index}
-      className={`group rounded-lg px-2 py-1 text-[15px] leading-[1.75] transition-colors ${
-        active ? "bg-iris/8" : matched ? "bg-amber/8" : ""
+      onClick={(e) => {
+        if (!editing && (e.target as HTMLElement).tagName !== "MARK") onSeek();
+      }}
+      className={`group relative cursor-pointer rounded-lg py-1.5 pl-4 pr-2 text-[15px] leading-[1.75] transition-colors ${
+        active
+          ? "bg-iris/8 before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-full before:bg-iris"
+          : matched
+            ? "bg-amber/8"
+            : "hover:bg-surface-2/60"
       }`}
     >
-      <button
-        onClick={onSeek}
-        className="mr-2 align-baseline font-mono text-[11px] text-faint opacity-0 transition-opacity group-hover:opacity-100 tnum"
-      >
+      <span className="pointer-events-none absolute -left-12 top-2 font-mono text-[11px] text-faint tnum opacity-60 transition group-hover:opacity-100">
         {clock(row.start - offset)}
-      </button>
+      </span>
       <EditableText
         as="span"
         editing={editing}
@@ -320,7 +341,7 @@ function Row({
         onEdit={onEdit}
         onCommit={onCommit}
       />
-    </p>
+    </div>
   );
 }
 

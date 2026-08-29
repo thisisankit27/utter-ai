@@ -47,7 +47,7 @@ export function SpeechRibbon({
   const [hoverX, setHoverX] = useState<number | null>(null);
 
   const bars = useMemo(() => {
-    const n = Math.max(24, Math.floor(width / 3));
+    const n = Math.max(24, Math.floor(width / 6));
     if (peaks && peaks.length) {
       // resample the provided peaks to n bars
       const out = new Array(n);
@@ -56,19 +56,20 @@ export function SpeechRibbon({
         const b = Math.max(a + 1, Math.floor(((i + 1) / n) * peaks.length));
         let m = 0;
         for (let j = a; j < b && j < peaks.length; j++) m = Math.max(m, peaks[j]);
-        out[i] = m;
+        out[i] = 0.12 + m * 0.88;
       }
       return out;
     }
-    // No decoded audio: a calm, deterministic idle ribbon (a timeline, not a fake).
+    // No decoded audio: a calm, deterministic idle ribbon that reads like speech
+    // cadence (a timeline, not a fake progress bar).
     const out = new Array(n);
     for (let i = 0; i < n; i++) {
       const t = i / n;
-      out[i] =
-        0.28 +
-        0.22 * Math.abs(Math.sin(t * 22)) +
-        0.16 * Math.abs(Math.sin(t * 7 + 1.3)) +
-        0.1 * Math.abs(Math.sin(t * 53));
+      const envelope = 0.5 + 0.5 * Math.sin(t * 6.5 + 0.6); // slow phrases
+      const detail =
+        0.5 * Math.abs(Math.sin(t * 47)) + 0.5 * Math.abs(Math.sin(t * 113 + 2));
+      const gap = Math.sin(t * 19) > 0.86 ? 0.15 : 1; // brief silences
+      out[i] = Math.max(0.06, (0.12 + envelope * detail * 0.9) * gap);
     }
     return out;
   }, [peaks, width]);
@@ -103,18 +104,18 @@ export function SpeechRibbon({
     const rangeEnd = range ? range[1] : duration;
     const xOf = (s: number) => (duration ? (s / duration) * width : 0);
 
-    const gap = 1.5;
-    const bw = Math.max(1.5, width / bars.length - gap);
+    const pitch = width / bars.length;
+    const bw = Math.max(2, pitch * 0.62);
     const mid = height / 2;
 
     for (let i = 0; i < bars.length; i++) {
-      const x = (i / bars.length) * width;
+      const x = i * pitch + (pitch - bw) / 2;
       const secs = (i / bars.length) * duration;
-      const h = Math.max(2, bars[i] * (height - 12));
+      const h = Math.max(3, bars[i] * (height - 14));
 
       let color = border;
       const inRange = secs >= rangeStart && secs <= rangeEnd;
-      if (mode === "select") color = inRange ? iris : faint + "55";
+      if (mode === "select") color = inRange ? iris : faint + "66";
       if (mode === "progress") color = secs <= progress * duration ? iris : border;
       if (mode === "play") {
         color = secs <= currentTime ? iris : border;

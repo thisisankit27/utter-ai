@@ -130,6 +130,7 @@ export function Segmented<T extends string>({
   options: { value: T; label: string; icon?: ReactNode }[];
   size?: "sm" | "md";
 }) {
+  const groupId = useId();
   return (
     <div
       role="radiogroup"
@@ -151,7 +152,7 @@ export function Segmented<T extends string>({
           >
             {active && (
               <motion.span
-                layoutId="segmented-active"
+                layoutId={`segmented-${groupId}`}
                 className="absolute inset-0 rounded-lg bg-surface shadow-soft"
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               />

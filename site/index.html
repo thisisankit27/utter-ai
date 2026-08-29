@@ -1,6 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
   <head>
+    <script>
+      document.documentElement.classList.remove("no-js");
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>UtterAI — private, local transcription</title>
@@ -33,13 +36,24 @@
           </span>
           UtterAI
         </a>
-        <nav class="nav-links">
+        <nav class="nav-links" id="nav-links">
           <a href="#how">How it works</a>
           <a href="#formats">Formats</a>
           <a href="#faq">FAQ</a>
           <a href="https://github.com/thisisankit27/utter-ai">GitHub</a>
           <a class="btn btn-primary" href="#download">Download</a>
         </nav>
+        <button
+          class="nav-toggle"
+          id="nav-toggle"
+          aria-label="Menu"
+          aria-expanded="false"
+          aria-controls="nav-links"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
       </div>
     </header>
 
@@ -67,13 +81,16 @@
 
         <figure class="frame reveal">
           <div class="bar"><i></i><i></i><i></i></div>
-          <img
-            src="assets/shot-transcript.png"
-            alt="UtterAI showing a finished transcript with timestamps and a playback ribbon"
-            width="1880"
-            height="1180"
-            loading="eager"
-          />
+          <picture>
+            <source srcset="assets/shot-transcript-light.png" media="(prefers-color-scheme: light)" />
+            <img
+              src="assets/shot-transcript.png"
+              alt="UtterAI showing a finished transcript with timestamps and a playback ribbon"
+              width="1160"
+              height="745"
+              loading="eager"
+            />
+          </picture>
         </figure>
       </section>
 
@@ -137,7 +154,10 @@
               </p>
             </div>
             <div class="step-media">
-              <img src="assets/shot-review.png" alt="Choosing a range on the speech ribbon" width="1200" height="820" loading="lazy" />
+              <picture>
+                <source srcset="assets/shot-review-light.png" media="(prefers-color-scheme: light)" />
+                <img src="assets/shot-review.png" alt="Choosing a range on the speech ribbon" width="1160" height="745" loading="lazy" />
+              </picture>
             </div>
           </article>
           <article class="step reveal">
@@ -151,7 +171,10 @@
               </p>
             </div>
             <div class="step-media">
-              <img src="assets/shot-working.png" alt="Transcription progress with a live preview" width="1200" height="820" loading="lazy" />
+              <picture>
+                <source srcset="assets/shot-working-light.png" media="(prefers-color-scheme: light)" />
+                <img src="assets/shot-working.png" alt="Transcription progress with a live preview" width="1160" height="745" loading="lazy" />
+              </picture>
             </div>
           </article>
           <article class="step reveal">
@@ -165,7 +188,10 @@
               </p>
             </div>
             <div class="step-media">
-              <img src="assets/shot-transcript.png" alt="The finished transcript view" width="1200" height="820" loading="lazy" />
+              <picture>
+                <source srcset="assets/shot-transcript-light.png" media="(prefers-color-scheme: light)" />
+                <img src="assets/shot-transcript.png" alt="The finished transcript view" width="1160" height="745" loading="lazy" />
+              </picture>
             </div>
           </article>
         </div>
