@@ -3,9 +3,46 @@ import ts from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import reactHooks from "eslint-plugin-react-hooks";
 
+const BROWSER_GLOBALS = {
+  window: "readonly",
+  document: "readonly",
+  navigator: "readonly",
+  location: "readonly",
+  localStorage: "readonly",
+  fetch: "readonly",
+  setTimeout: "readonly",
+  setInterval: "readonly",
+  clearInterval: "readonly",
+  requestAnimationFrame: "readonly",
+  performance: "readonly",
+  matchMedia: "readonly",
+  IntersectionObserver: "readonly",
+  addEventListener: "readonly",
+};
+
 export default [
-  { ignores: ["dist", "site/dist", "src-tauri", "node_modules", "target", "tests/wdio.conf.ts"] },
+  {
+    ignores: [
+      "dist",
+      "site/dist",
+      "site/fonts",
+      "src-tauri",
+      "node_modules",
+      "target",
+      "tests/wdio.conf.ts",
+      "tests/screenshots.mjs",
+      "playwright.config.ts",
+    ],
+  },
   js.configs.recommended,
+  {
+    files: ["site/**/*.js"],
+    languageOptions: {
+      sourceType: "module",
+      globals: BROWSER_GLOBALS,
+    },
+    rules: { "no-empty": ["error", { allowEmptyCatch: true }] },
+  },
   {
     files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
