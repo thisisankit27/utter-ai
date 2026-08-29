@@ -11,7 +11,9 @@ on:
       - "src-tauri/**"
       - "src/**"
       - "tests/**"
+      - "scripts/fetch-binaries.sh"
       - ".github/workflows/e2e.yml"
+      - ".github/actions/**"
   workflow_dispatch:
 
 jobs:
