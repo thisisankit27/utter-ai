@@ -1,4 +1,9 @@
 version: 2
+
+# Policy: Dependabot keeps security patches and minor/patch bumps flowing.
+# Major upgrades (build tooling, frameworks, the Rust toolchain) are done by
+# hand with a migration pass — never on a schedule.
+
 updates:
   - package-ecosystem: github-actions
     directory: "/"
@@ -8,8 +13,8 @@ updates:
       actions:
         patterns: ["*"]
     ignore:
-      # The Rust toolchain is pinned on purpose (clippy lint drift breaks
-      # `-D warnings`). Bump it deliberately, not on a schedule.
+      # Pinned on purpose — a new compiler brings new clippy lints and
+      # `-D warnings` turns those into build failures.
       - dependency-name: "dtolnay/rust-toolchain"
 
   - package-ecosystem: npm
@@ -20,20 +25,17 @@ updates:
     groups:
       tauri-js:
         patterns: ["@tauri-apps/*"]
+        update-types: ["minor", "patch"]
       dev-tooling:
         dependency-type: development
         update-types: ["minor", "patch"]
+      prod:
+        dependency-type: production
+        update-types: ["minor", "patch"]
     ignore:
-      # UI framework majors need a hands-on migration pass — not a bot PR.
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@types/react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@types/react-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "framer-motion"
+      # No unattended majors anywhere in the JS tree — Vite, Tailwind,
+      # TypeScript, ESLint, React and friends all need a deliberate bump.
+      - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
   - package-ecosystem: cargo
@@ -44,3 +46,12 @@ updates:
     groups:
       tauri-rust:
         patterns: ["tauri", "tauri-*"]
+        update-types: ["minor", "patch"]
+      cargo-minor:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      # Includes 0.x → 0.y for pre-1.0 crates, which are effectively breaking
+      # (e.g. sha2 0.10 → 0.11 changed the digest API).
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
