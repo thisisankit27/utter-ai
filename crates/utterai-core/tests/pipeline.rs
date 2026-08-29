@@ -110,8 +110,8 @@ fn reports_no_speech_for_toneonly_audio() {
     let Ok(model) = std::env::var("UTTERAI_TEST_MODEL") else {
         return;
     };
-    let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../fixtures/generated/short-clip.wav");
+    let fixture =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/generated/short-clip.wav");
     if !fixture.exists() {
         eprintln!("skipping: run scripts/make-fixtures.sh first");
         return;
