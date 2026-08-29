@@ -261,6 +261,7 @@ pub fn transcribe(
         .map(str::to_string)
         .or_else(|| req.language.clone())
         .unwrap_or_else(|| "auto".into());
+    tracing::info!(%language, segments = raw.len(), "transcript assembled");
 
     let segments = chunk::captionize(&raw);
     let paragraphs = chunk::paragraphize(&raw);
