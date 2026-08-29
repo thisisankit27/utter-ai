@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libasound2-dev \
       patchelf desktop-file-utils fakeroot \
       xvfb webkit2gtk-driver \
+      ffmpeg espeak-ng \
     && rm -rf /var/lib/apt/lists/*
 
 # Node 22 (for the Tauri frontend build)

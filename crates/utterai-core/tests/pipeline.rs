@@ -11,11 +11,26 @@ use std::sync::Arc;
 use utterai_core::transcribe::{transcribe, TranscribeEvent, TranscribeRequest};
 
 fn tool(name: &str) -> PathBuf {
+    // an explicit sidecar (set by the app build) wins
+    if let Ok(dir) = std::env::var("UTTERAI_SIDECAR_DIR") {
+        let p = PathBuf::from(dir).join(format!("utterai-{name}"));
+        if p.exists() {
+            return p;
+        }
+    }
     // system ffmpeg/ffprobe in CI and dev containers
-    for dir in ["/usr/bin", "/usr/local/bin", "/opt/homebrew/bin"] {
+    for dir in ["/usr/bin", "/usr/local/bin", "/opt/homebrew/bin", "/bin"] {
         let p = PathBuf::from(dir).join(name);
         if p.exists() {
             return p;
+        }
+    }
+    if let Some(paths) = std::env::var_os("PATH") {
+        for dir in std::env::split_paths(&paths) {
+            let p = dir.join(name);
+            if p.is_file() {
+                return p;
+            }
         }
     }
     PathBuf::from(name)
