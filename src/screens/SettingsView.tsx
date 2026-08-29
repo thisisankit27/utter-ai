@@ -28,6 +28,10 @@ export function SettingsView() {
   const refreshModels = useStore((s) => s.refreshModels);
   const toast = useStore((s) => s.toast);
   const showError = useStore((s) => s.showError);
+  const updateState = useStore((s) => s.update);
+  const checkForUpdates = useStore((s) => s.checkForUpdates);
+  const installUpdate = useStore((s) => s.installUpdate);
+  const relaunchForUpdate = useStore((s) => s.relaunchForUpdate);
 
   const [dep, setDep] = useState<DependencyReport | null>(null);
   const [progress, setProgress] = useState<Record<string, number>>({});
@@ -228,14 +232,64 @@ export function SettingsView() {
         </Row>
       </Section>
 
+      <Section
+        title="Updates"
+        hint="When a new version ships, UtterAI can update itself — no reinstall. The check contacts GitHub for a version number and nothing else."
+      >
+        <Row
+          label="Check for updates automatically"
+          hint="Runs once when UtterAI starts."
+        >
+          <Switch
+            label="Check for updates automatically"
+            checked={settings.auto_update_check}
+            onChange={(v) => update({ auto_update_check: v })}
+          />
+        </Row>
+        <Row label="Current version">
+          <span className="text-sm text-muted tnum">{__APP_VERSION__}</span>
+        </Row>
+        <Row label={updateStatusLabel(updateState.status, updateState.info?.version)}>
+          {updateState.status === "available" ? (
+            <button
+              className="btn-primary px-3 py-1.5 text-xs"
+              onClick={installUpdate}
+            >
+              <IconDownload className="h-3.5 w-3.5" /> Download &amp; install
+            </button>
+          ) : updateState.status === "downloading" ? (
+            <span className="flex items-center gap-1.5 text-xs text-faint">
+              <Spinner className="h-3 w-3" />
+              {Math.round(updateState.progress * 100)}%
+            </span>
+          ) : updateState.status === "ready" ? (
+            <button
+              className="btn-primary px-3 py-1.5 text-xs"
+              onClick={relaunchForUpdate}
+            >
+              Restart now
+            </button>
+          ) : (
+            <button
+              className="btn-outline px-3 py-1.5 text-xs"
+              disabled={updateState.status === "checking"}
+              onClick={() => checkForUpdates({ manual: true })}
+            >
+              {updateState.status === "checking" ? "Checking…" : "Check now"}
+            </button>
+          )}
+        </Row>
+      </Section>
+
       <Section title="Privacy & storage">
         <div className="rounded-xl border border-teal/25 bg-teal/6 p-3.5 text-sm">
           <p className="flex items-center gap-2 font-medium text-teal">
             <IconShield className="h-4 w-4" /> Nothing leaves your computer
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted">
-            Transcription runs entirely offline. The only time UtterAI uses the
-            network is when you choose to download a model.
+            Transcription runs entirely offline. UtterAI only uses the network
+            when you download a model or when it checks for an update — never to
+            send your audio or transcripts anywhere.
           </p>
         </div>
         {dep && (
@@ -324,6 +378,23 @@ function Row({
       <div className="shrink-0">{children}</div>
     </div>
   );
+}
+
+function updateStatusLabel(status: string, version?: string): string {
+  switch (status) {
+    case "available":
+      return `Version ${version} is ready to install`;
+    case "downloading":
+      return "Downloading the update";
+    case "ready":
+      return "Update installed — restart to finish";
+    case "uptodate":
+      return "You're on the latest version";
+    case "error":
+      return "Couldn't reach the update server";
+    default:
+      return "Check for a newer version";
+  }
 }
 
 function StatusDot({ ok, label }: { ok: boolean; label: string }) {

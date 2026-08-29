@@ -569,12 +569,21 @@ fn clear_cache() -> Result<usize, String> {
 pub fn run() {
     let _ = paths::ensure_dirs();
 
-    tauri::Builder::default()
+    #[allow(unused_mut)]
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_process::init());
+
+    // The updater is desktop-only; a future mobile shell ships through the stores.
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    }
+
+    builder
         .manage(AppState {
             store: Store::load(),
             ..Default::default()

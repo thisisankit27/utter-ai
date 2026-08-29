@@ -14,6 +14,7 @@
     "os:allow-version",
     "os:allow-os-type",
     "process:allow-restart",
+    "updater:default",
     {
       "identifier": "dialog:allow-open",
       "allow": [{ "path": "**" }]

@@ -31,6 +31,8 @@ pub struct Settings {
     pub onboarding_complete: bool,
     /// Keep the media player in sync while transcript scrolls.
     pub follow_playback: bool,
+    /// Check GitHub for a newer release on launch. Opt-out.
+    pub auto_update_check: bool,
 }
 
 impl Default for Settings {
@@ -43,6 +45,7 @@ impl Default for Settings {
             developer_mode: false,
             onboarding_complete: false,
             follow_playback: true,
+            auto_update_check: true,
         }
     }
 }

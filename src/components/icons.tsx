@@ -56,6 +56,11 @@ export const IconDownload = (p: P) => (
     <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
   </svg>
 );
+export const IconRefresh = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M21 12a9 9 0 1 1-2.64-6.36M21 4v5h-5" />
+  </svg>
+);
 export const IconCheck = (p: P) => (
   <svg {...base(p)}>
     <path d="m5 13 4 4L19 7" />

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api, asUserError, onJobUpdate } from "./ipc";
+import { checkForUpdate, relaunchApp, type UpdateSession } from "./updates";
 import type {
   HistoryEntry,
   JobStage,
@@ -8,6 +9,7 @@ import type {
   Segment,
   Settings,
   Transcript,
+  UpdateInfo,
   UserError,
 } from "./types";
 
@@ -39,6 +41,23 @@ interface Toast {
   tone: "info" | "success" | "error";
 }
 
+export type UpdateStatus =
+  | "idle"
+  | "checking"
+  | "available"
+  | "downloading"
+  | "ready"
+  | "error"
+  | "uptodate";
+
+interface UpdateState {
+  status: UpdateStatus;
+  info: UpdateInfo | null;
+  progress: number;
+  /** Set once the user dismisses the banner for this session. */
+  dismissed: boolean;
+}
+
 interface AppStore {
   ready: boolean;
   route: Route;
@@ -59,10 +78,16 @@ interface AppStore {
 
   error: UserError | null;
   toasts: Toast[];
+  update: UpdateState;
 
   init: () => Promise<void>;
   go: (route: Route) => void;
   applyTheme: () => void;
+
+  checkForUpdates: (opts?: { manual?: boolean }) => Promise<void>;
+  installUpdate: () => Promise<void>;
+  relaunchForUpdate: () => Promise<void>;
+  dismissUpdate: () => void;
 
   loadMedia: (path: string) => Promise<void>;
   setRange: (range: [number, number] | null) => void;
@@ -89,6 +114,8 @@ interface AppStore {
 
 let jobUnlisten: (() => void) | null = null;
 let toastSeq = 0;
+/** The live updater handle between "available" and "ready". */
+let pendingUpdate: UpdateSession | null = null;
 
 /** Small unique id — avoids `crypto.randomUUID`, which is undefined in some
  *  webviews where the app origin isn't treated as a secure context. */
@@ -115,6 +142,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
   error: null,
   toasts: [],
+  update: { status: "idle", info: null, progress: 0, dismissed: false },
 
   init: async () => {
     try {
@@ -134,11 +162,80 @@ export const useStore = create<AppStore>((set, get) => ({
       get().applyTheme();
       const autoload = await api.e2eAutoload().catch(() => null);
       if (autoload) get().loadMedia(autoload);
+      if (settings.auto_update_check) {
+        // Don't hold up the first paint for a network round-trip.
+        setTimeout(() => get().checkForUpdates(), 1200);
+      }
     } catch (e) {
       set({ ready: true });
       get().showError(e);
     }
   },
+
+  checkForUpdates: async (opts) => {
+    const manual = opts?.manual ?? false;
+    const cur = get().update.status;
+    if (cur === "checking" || cur === "downloading") return;
+    set({ update: { ...get().update, status: "checking" } });
+    try {
+      const session = await checkForUpdate();
+      if (!session) {
+        pendingUpdate = null;
+        set({
+          update: { status: "uptodate", info: null, progress: 0, dismissed: false },
+        });
+        if (manual) get().toast("UtterAI is up to date", "success");
+        return;
+      }
+      pendingUpdate = session;
+      set({
+        update: {
+          status: "available",
+          info: session.info,
+          progress: 0,
+          dismissed: false,
+        },
+      });
+    } catch (e) {
+      pendingUpdate = null;
+      set({ update: { ...get().update, status: "error" } });
+      if (manual) get().showError(e);
+    }
+  },
+
+  installUpdate: async () => {
+    if (!pendingUpdate) return;
+    // The user opted in — let the progress and the restart prompt show in the
+    // banner even if they'd dismissed the initial "available" notice.
+    set({
+      update: {
+        ...get().update,
+        status: "downloading",
+        progress: 0,
+        dismissed: false,
+      },
+    });
+    try {
+      await pendingUpdate.downloadAndInstall((fraction) => {
+        set({ update: { ...get().update, progress: fraction } });
+      });
+      set({ update: { ...get().update, status: "ready", progress: 1 } });
+    } catch (e) {
+      set({ update: { ...get().update, status: "error" } });
+      get().showError(e);
+    }
+  },
+
+  relaunchForUpdate: async () => {
+    try {
+      await relaunchApp();
+    } catch (e) {
+      get().showError(e);
+    }
+  },
+
+  dismissUpdate: () =>
+    set({ update: { ...get().update, dismissed: true } }),
 
   go: (route) => set({ route }),
 

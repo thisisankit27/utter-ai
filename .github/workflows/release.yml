@@ -19,6 +19,9 @@ jobs:
   build:
     strategy:
       fail-fast: false
+      # Serialised so each leg merges its platform into the release's single
+      # latest.json without racing the other.
+      max-parallel: 1
       matrix:
         include:
           - os: ubuntu-24.04
@@ -64,9 +67,14 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signs the updater artifacts and writes latest.json. Without these the
+          # build still succeeds but produces no auto-update manifest.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ env.TAG }}
           releaseName: "UtterAI ${{ env.TAG }}"
+          includeUpdaterJson: true
           releaseBody: |
             **Private, local audio & video transcription.**
 

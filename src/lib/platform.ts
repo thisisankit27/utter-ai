@@ -48,6 +48,15 @@ export async function revealPath(path: string): Promise<void> {
   await openPath(path).catch(() => {});
 }
 
+export async function openExternal(url: string): Promise<void> {
+  if (MOCK) {
+    window.open(url, "_blank", "noopener");
+    return;
+  }
+  const { openUrl } = await import("@tauri-apps/plugin-opener");
+  await openUrl(url).catch(() => {});
+}
+
 export async function onMediaDrop(
   cb: (path: string) => void,
   onDragState?: (over: boolean) => void,
