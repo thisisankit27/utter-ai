@@ -11,7 +11,9 @@ import struct
 
 from PIL import Image, ImageDraw
 
-OUT = os.path.join(os.path.dirname(__file__), "..", "src-tauri", "icons")
+HERE = os.path.dirname(__file__)
+OUT = os.path.join(HERE, "..", "src-tauri", "icons")
+SITE = os.path.join(HERE, "..", "site", "assets")
 os.makedirs(OUT, exist_ok=True)
 
 IRIS_TOP = (128, 123, 255)
@@ -95,6 +97,12 @@ def main() -> None:
 
     write_icns(os.path.join(OUT, "icon.icns"), master)
     print("icons written to", os.path.normpath(OUT))
+
+    # Landing-page favicon + apple-touch icon share the exact same mark.
+    if os.path.isdir(SITE):
+        render(64).save(os.path.join(SITE, "favicon.png"))
+        render(180).save(os.path.join(SITE, "apple-touch-icon.png"))
+        print("site icons written to", os.path.normpath(SITE))
 
 
 def write_icns(path: str, master: Image.Image) -> None:
