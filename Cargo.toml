@@ -18,7 +18,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "fs", 
 
 [profile.release]
 codegen-units = 1
-lto = true
+lto = "thin"
 opt-level = 3
 strip = true
 panic = "unwind"

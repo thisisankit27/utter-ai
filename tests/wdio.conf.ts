@@ -1,22 +1,27 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import fs from "node:fs";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * End-to-end walkthrough of the packaged app using tauri-driver.
+ * End-to-end walkthrough of the packaged app via tauri-driver.
  *
- * Requires: a release build at target/release/utterai, `tauri-driver`
- * on PATH (`cargo install tauri-driver`), and WebKitWebDriver (Linux). Run under
- * xvfb. The app auto-loads UTTERAI_E2E_FILE on boot.
+ * Requires: a `tauri build` at target/release/utterai (a plain `cargo build`
+ * runs in dev mode and expects the vite server), `tauri-driver` on PATH, and
+ * WebKitWebDriver on Linux. Run under xvfb.
+ *
+ * The app reads a media path from a sentinel file on boot (see the
+ * `e2e_autoload` command) so the walkthrough skips the native file dialog.
  */
 const ROOT = path.resolve(__dirname, "..");
-const APP =
-  process.env.UTTERAI_BIN || path.join(ROOT, "target/release/utterai");
+const APP = process.env.UTTERAI_BIN || path.join(ROOT, "target/release/utterai");
 const FIXTURE =
-  process.env.UTTERAI_E2E_FILE || path.join(ROOT, "fixtures/jfk-4s.wav");
+  process.env.UTTERAI_FIXTURE || path.join(ROOT, "fixtures/jfk-4s.wav");
+const SENTINEL =
+  process.env.UTTERAI_E2E_FILE || path.join(os.tmpdir(), "utterai-e2e-autoload");
 
 let tauriDriver: ChildProcess;
 
@@ -48,8 +53,14 @@ export const config: WebdriverIO.Config = {
       );
     }
     fs.mkdirSync(path.join(ROOT, "tests/artifacts"), { recursive: true });
-    process.env.UTTERAI_E2E = "1";
-    process.env.UTTERAI_E2E_FILE = FIXTURE;
+    fs.writeFileSync(SENTINEL, FIXTURE);
+  },
+  onComplete: () => {
+    try {
+      fs.unlinkSync(SENTINEL);
+    } catch {
+      /* ignore */
+    }
   },
   beforeSession: () => {
     const nativeDriver =
@@ -60,10 +71,7 @@ export const config: WebdriverIO.Config = {
     tauriDriver = spawn(
       "tauri-driver",
       ["--port", "4444", "--native-driver", nativeDriver],
-      {
-        stdio: [null, process.stdout, process.stderr],
-        env: { ...process.env, UTTERAI_E2E: "1", UTTERAI_E2E_FILE: FIXTURE },
-      },
+      { stdio: [null, process.stdout, process.stderr] },
     );
   },
   afterSession: () => {

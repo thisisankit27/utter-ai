@@ -16,12 +16,20 @@ describe("UtterAI packaged app", () => {
     // Fresh data dir → onboarding overlay. Dismiss it.
     const skip = await $("button*=Skip");
     if (await skip.isExisting()) await skip.click();
+    await browser.pause(1500);
+    console.log("SCREEN AFTER LAUNCH:\n" + (await $("body").getText()).slice(0, 800));
   });
 
   it("transcribes the auto-loaded fixture end to end", async () => {
     // Review screen (auto-loaded via e2e_autoload)
     const start = await $("button*=Start transcription");
-    await start.waitForClickable({ timeout: 30000 });
+    try {
+      await start.waitForClickable({ timeout: 30000 });
+    } catch (e) {
+      await browser.saveScreenshot("./tests/artifacts/app-e2e-noreview.png");
+      console.log("NO REVIEW BODY:\n" + (await $("body").getText()).slice(0, 800));
+      throw e;
+    }
     await start.click();
 
     // Working screen — appears unless the clip transcribes faster than we poll.

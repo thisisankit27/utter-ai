@@ -489,15 +489,20 @@ fn cancel_transcription(state: State<AppState>, job_id: String) {
     }
 }
 
-/// Test hook: when `UTTERAI_E2E=1`, returns the path in `UTTERAI_E2E_FILE` so the
-/// end-to-end suite can load media without driving the native file dialog.
+/// Test hook: the end-to-end suite writes a media path to a sentinel file
+/// (`$UTTERAI_E2E_FILE` or the OS temp dir) and the UI loads it on boot,
+/// avoiding the native file dialog. Returns `None` in a normal run.
 #[tauri::command]
 fn e2e_autoload() -> Option<String> {
-    if std::env::var("UTTERAI_E2E").as_deref() == Ok("1") {
-        std::env::var("UTTERAI_E2E_FILE").ok()
-    } else {
-        None
+    let sentinel = std::env::var("UTTERAI_E2E_FILE")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|_| std::env::temp_dir().join("utterai-e2e-autoload"));
+    let path = std::fs::read_to_string(&sentinel).ok()?;
+    let path = path.trim();
+    if path.is_empty() || !std::path::Path::new(path).is_file() {
+        return None;
     }
+    Some(path.to_string())
 }
 
 #[tauri::command]

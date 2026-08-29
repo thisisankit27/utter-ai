@@ -40,8 +40,8 @@ jobs:
         run: |
           curl -fL -o src-tauri/resources/models/ggml-base-q5_1.bin \
             https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-q5_1.bin
-      - run: npm run build
-      - run: cargo build --release -p utterai
+      - name: Build the app (production frontend + bundle)
+        run: npm run tauri build -- --bundles deb
       - name: Provide the model to the app data dir
         run: |
           mkdir -p ~/.local/share/UtterAI/models
