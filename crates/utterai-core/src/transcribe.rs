@@ -263,6 +263,10 @@ pub fn transcribe(
         .unwrap_or_else(|| "auto".into());
     tracing::info!(%language, segments = raw.len(), "transcript assembled");
 
+    if raw.is_empty() {
+        return Err(CoreError::NoSpeech);
+    }
+
     let segments = chunk::captionize(&raw);
     let paragraphs = chunk::paragraphize(&raw);
 

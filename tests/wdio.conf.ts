@@ -19,7 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const APP = process.env.UTTERAI_BIN || path.join(ROOT, "target/release/utterai");
 const FIXTURE =
-  process.env.UTTERAI_FIXTURE || path.join(ROOT, "fixtures/jfk-4s.wav");
+  process.env.UTTERAI_FIXTURE || path.join(ROOT, "fixtures/jfk.wav");
 const SENTINEL =
   process.env.UTTERAI_E2E_FILE || path.join(os.tmpdir(), "utterai-e2e-autoload");
 
