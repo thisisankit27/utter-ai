@@ -1,28 +1,28 @@
 {
-  "version": "1.1.1",
-  "tag": "v1.1.1",
-  "published": "2026-08-30T03:33:34Z",
+  "version": "1.2.0",
+  "tag": "v1.2.0",
+  "published": "2026-08-30T10:03:33Z",
   "files": [
     {
-      "name": "UtterAI_1.1.1_amd64.AppImage",
-      "sha256": "ad73cfd5ef5e45057ca2b7bace199103c91f7008bd06ad9b5163ea00a7ddc14c",
-      "size": 203053560
+      "name": "UtterAI_1.2.0_amd64.AppImage",
+      "sha256": "7b19e7392df66f7ce52c35b5d37f5f32c992fbf5e04f7f36a4b1152857ac7b18",
+      "size": 202971640
     },
     {
-      "name": "UtterAI_1.1.1_amd64.deb",
-      "sha256": "a8d27d62cb6ca37474ece63a540daa89c7fb0ae18abe21af90dc8f8a8d6e0bbc",
-      "size": 124033690
+      "name": "UtterAI_1.2.0_amd64.deb",
+      "sha256": "f9415f051d69e82bf70eb526194f35108071f0aea57852551dbbd0b21d31fbed",
+      "size": 123920154
     },
     {
-      "name": "UtterAI_1.1.1_x64-setup.exe",
-      "sha256": "330dfeabaad6daac91f36f177aa9428036b1435075b5f69bb9fd6864de9503bd",
-      "size": 142072448
+      "name": "UtterAI_1.2.0_x64_en-US.msi",
+      "sha256": "34c6d4444811c22ac457a83b43708ae8753019c16a8055a00d1b4a89f7f46746",
+      "size": 175751168
     },
     {
-      "name": "UtterAI_1.1.1_x64_en-US.msi",
-      "sha256": "ea2eec1ec85eb6c03a47727006e62f99c822fa98e06dfad18f759fa4f8dc68f5",
-      "size": 175783936
+      "name": "UtterAI_1.2.0_x64-setup.exe",
+      "sha256": "dfbdb31d4993878c870132836995014a1ecc6e837363f716f921202ebfb9ce67",
+      "size": 142029234
     }
   ],
-  "note": "Generated from the release's own checksums.txt by .github/workflows/downloads.yml \u2014 never edited by hand."
+  "note": "Generated from the release's own checksums.txt by .github/workflows/downloads.yml — never edited by hand."
 }
