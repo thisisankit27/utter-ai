@@ -19,6 +19,8 @@ const BROWSER_GLOBALS = {
   matchMedia: "readonly",
   IntersectionObserver: "readonly",
   addEventListener: "readonly",
+  URLSearchParams: "readonly",
+  history: "readonly",
 };
 
 export default [

@@ -17,11 +17,16 @@ export function Working() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [elapsed, setElapsed] = useState(0);
 
+  // Keyed on the start time, not the whole job object: `job` is replaced on
+  // every progress tick (several a second), which tore this interval down and
+  // rebuilt it each time.
+  const startedAt = job?.startedAt;
   useEffect(() => {
-    if (!job) return;
-    const i = setInterval(() => setElapsed(Date.now() - job.startedAt), 500);
+    if (startedAt == null) return;
+    setElapsed(Date.now() - startedAt);
+    const i = setInterval(() => setElapsed(Date.now() - startedAt), 500);
     return () => clearInterval(i);
-  }, [job]);
+  }, [startedAt]);
 
   useEffect(() => {
     previewRef.current?.scrollTo({ top: previewRef.current.scrollHeight });

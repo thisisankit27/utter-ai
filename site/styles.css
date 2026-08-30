@@ -630,3 +630,246 @@ footer a:hover {
     transform: none;
   }
 }
+
+/* ---------------------------------------------------- download / thanks -- */
+.thanks {
+  padding: 56px 0 24px;
+  max-width: 900px;
+}
+/* The global `section { padding-block: 80px }` is tuned for the landing page's
+   full-bleed rhythm. Here it stacks on top of these margins and leaves a screen
+   of dead space between every block, so spacing is set explicitly instead. */
+.thanks > section {
+  padding-block: 0;
+}
+/* Prose stays readable, but the cards align with every other block on the
+   page rather than stopping short at the text measure. */
+.thanks-head h1,
+.thanks-head .lede,
+.thanks-head .dl-switch {
+  max-width: 62ch;
+}
+.thanks-head h1 {
+  font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif;
+  font-size: clamp(1.9rem, 1.2rem + 2.2vw, 2.7rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-top: 10px;
+}
+.thanks-head .lede {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.65;
+}
+
+.card-lite {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.dl-file {
+  margin-top: 24px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.dl-file-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.dl-file-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--iris) 12%, transparent);
+  color: var(--iris);
+}
+.dl-file-text {
+  min-width: 0;
+}
+.dl-file-name {
+  font-weight: 550;
+  word-break: break-word;
+}
+.dl-file-meta {
+  margin-top: 3px;
+  font-size: 0.85rem;
+  color: var(--faint);
+}
+.dl-file .btn {
+  flex: none;
+}
+
+.dl-switch {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  color: var(--faint);
+}
+.dl-switch a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border);
+}
+.dl-switch a:hover,
+.dl-switch a.is-current {
+  color: var(--iris);
+  text-decoration-color: currentColor;
+}
+
+.thanks-grid {
+  margin-top: 60px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+.thanks-col h2,
+.verify h2,
+.trouble h2 {
+  font-family: "Bricolage Grotesque", Inter, system-ui, sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+.steps-list {
+  margin-top: 16px;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.steps-list li {
+  counter-increment: step;
+  position: relative;
+  padding: 0 0 16px 34px;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 0.93rem;
+}
+.steps-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--iris);
+  background: color-mix(in srgb, var(--iris) 12%, transparent);
+}
+.steps-list b {
+  color: var(--text);
+  font-weight: 550;
+}
+.steps-list code,
+.trouble code,
+.verify-lede code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.85em;
+  background: var(--surface-2);
+  border-radius: 5px;
+  padding: 1px 5px;
+  word-break: break-word;
+}
+
+.verify {
+  margin-top: 60px;
+}
+.verify[hidden] {
+  display: none;
+}
+.verify-lede {
+  margin-top: 12px;
+  color: var(--muted);
+  max-width: 68ch;
+  line-height: 1.65;
+  font-size: 0.93rem;
+}
+.hash-row {
+  margin-top: 20px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.hash-text {
+  min-width: 0;
+  flex: 1 1 22ch;
+}
+.hash-label {
+  font-size: 0.78rem;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.hash-value {
+  display: block;
+  margin-top: 5px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-all;
+}
+.hash-copy {
+  flex: none;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+}
+.verify-how {
+  margin-top: 22px;
+  font-size: 0.85rem;
+  color: var(--faint);
+}
+.verify-cmd {
+  margin-top: 8px;
+  white-space: pre;
+}
+.verify-all {
+  margin-top: 18px;
+  font-size: 0.88rem;
+}
+
+.trouble {
+  margin-top: 60px;
+  padding-bottom: 8px;
+}
+.trouble h2 {
+  margin-bottom: 4px;
+}
+
+@media (max-width: 760px) {
+  .thanks {
+    padding-top: 36px;
+  }
+  .thanks-grid {
+    grid-template-columns: 1fr;
+    gap: 34px;
+    margin-top: 40px;
+  }
+  .dl-file,
+  .hash-row {
+    align-items: flex-start;
+  }
+  .dl-file .btn,
+  .hash-copy {
+    width: 100%;
+    justify-content: center;
+  }
+}

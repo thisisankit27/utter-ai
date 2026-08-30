@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    <script>
+      document.documentElement.classList.remove("no-js");
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Downloading UtterAI — installing and getting started</title>
+    <meta
+      name="description"
+      content="Your UtterAI download is starting. Installation steps, first-launch guidance, SHA-256 checksums and troubleshooting for Windows and Linux."
+    />
+    <link rel="canonical" href="https://utter-ai.vibethroughcode.com/download.html" />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#5b54e8" />
+    <link rel="icon" href="assets/favicon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <div class="wrap nav-inner">
+        <a class="brand" href="./">
+          <svg class="mark" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+            <defs>
+              <linearGradient id="brandIris" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#807BFF" />
+                <stop offset="1" stop-color="#635BF0" />
+              </linearGradient>
+            </defs>
+            <rect width="24" height="24" rx="5.6" fill="url(#brandIris)" />
+            <g fill="#fff">
+              <rect x="3.6" y="8.4" width="2.2" height="7.2" rx="1.1" />
+              <rect x="7.35" y="5.28" width="2.2" height="13.44" rx="1.1" />
+              <rect x="11.1" y="2.16" width="2.2" height="19.68" rx="1.1" />
+              <rect x="14.85" y="6.24" width="2.2" height="11.52" rx="1.1" />
+              <rect x="18.6" y="9.12" width="2.2" height="5.76" rx="1.1" />
+            </g>
+          </svg>
+          UtterAI
+        </a>
+        <nav class="nav-links" id="nav-links">
+          <a href="./#how">How it works</a>
+          <a href="./#faq">FAQ</a>
+          <a href="https://github.com/thisisankit27/utter-ai">GitHub</a>
+        </nav>
+        <button
+          class="nav-toggle"
+          id="nav-toggle"
+          aria-label="Menu"
+          aria-expanded="false"
+          aria-controls="nav-links"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="wrap thanks" id="top">
+      <section class="thanks-head">
+        <p class="eyebrow" id="dl-eyebrow">Download started</p>
+        <h1>Thanks — UtterAI is on its way.</h1>
+        <p class="lede" id="dl-lede">
+          Your download should have begun automatically.
+        </p>
+
+        <div class="dl-file card-lite" id="dl-file">
+          <div class="dl-file-main">
+            <span class="dl-file-icon" id="dl-os-icon" aria-hidden="true"></span>
+            <div class="dl-file-text">
+              <p class="dl-file-name" id="dl-name">Preparing your download…</p>
+              <p class="dl-file-meta" id="dl-meta">Checking the latest release</p>
+            </div>
+          </div>
+          <a class="btn btn-primary" id="dl-again" href="https://github.com/thisisankit27/utter-ai/releases/latest">
+            Download again
+          </a>
+        </div>
+
+        <p class="dl-switch">
+          Wrong platform?
+          <a href="#" data-os="windows">Windows installer</a> ·
+          <a href="#" data-os="deb">Debian&nbsp;/&nbsp;Ubuntu</a> ·
+          <a href="#" data-os="appimage">Linux AppImage</a> ·
+          <a href="#" data-os="msi">Windows MSI</a>
+        </p>
+      </section>
+
+      <section class="thanks-grid">
+        <article class="thanks-col">
+          <h2>Install it</h2>
+          <ol class="steps-list" id="install-steps"></ol>
+        </article>
+
+        <article class="thanks-col">
+          <h2>First run</h2>
+          <ol class="steps-list">
+            <li>
+              <b>Open UtterAI.</b> A short intro explains what it does and lets
+              you turn automatic update checks off if you'd rather they were.
+            </li>
+            <li>
+              <b>Pick a file.</b> Choose an audio or video file, or drag one onto
+              the window. MP3, WAV, M4A, FLAC, OGG, MP4, MKV, MOV and more.
+            </li>
+            <li>
+              <b>Choose how much.</b> Transcribe the whole thing, or drag the
+              handles to a range and do just those few minutes.
+            </li>
+            <li>
+              <b>Press Start.</b> The built-in model needs no download, so the
+              first transcription works offline straight away.
+            </li>
+            <li>
+              <b>Read, fix, export.</b> Click a line to play it, double-click to
+              correct a word, then export to TXT, SRT, VTT, Markdown or JSON.
+            </li>
+          </ol>
+        </article>
+      </section>
+
+      <section class="verify" id="verify">
+        <h2>Verify what you downloaded</h2>
+        <p class="verify-lede">
+          Every release is built in the open by GitHub Actions, and the SHA-256
+          below comes from that build's own <code>checksums.txt</code> — not from
+          anyone typing it in. If the hash of your file matches, the file is
+          byte-for-byte what the workflow produced. This is optional; skip it if
+          it isn't your sort of thing.
+        </p>
+
+        <div class="hash-row card-lite">
+          <div class="hash-text">
+            <p class="hash-label" id="hash-file">—</p>
+            <code class="hash-value" id="hash-value">—</code>
+          </div>
+          <button class="btn btn-ghost hash-copy" id="hash-copy" type="button">
+            Copy
+          </button>
+        </div>
+
+        <p class="verify-how">Check it yourself:</p>
+        <pre class="sample verify-cmd" id="verify-cmd" tabindex="0" role="region" aria-label="Command to check the checksum"></pre>
+
+        <p class="verify-all">
+          <a href="https://github.com/thisisankit27/utter-ai/releases/latest" id="all-hashes">
+            All checksums and signatures for this release →
+          </a>
+        </p>
+      </section>
+
+      <section class="faq trouble" id="trouble">
+        <h2>If something goes wrong</h2>
+        <details>
+          <summary>Windows says "Windows protected your PC"</summary>
+          <p>
+            UtterAI isn't code-signed yet — a certificate costs a few hundred
+            pounds a year, and this is a free project. SmartScreen shows that
+            warning for any unsigned installer. Click <b>More info</b>, then
+            <b>Run anyway</b>. If you'd rather not, verify the SHA-256 above
+            first: it proves the file is exactly what the public build produced.
+          </p>
+        </details>
+        <details>
+          <summary>The AppImage won't start</summary>
+          <p>
+            It needs the executable bit: <code>chmod +x UtterAI_*.AppImage</code>.
+            On some minimal systems it also needs FUSE
+            (<code>sudo apt install libfuse2</code>). Failing that, run it
+            extracted: <code>./UtterAI_*.AppImage --appimage-extract-run</code>.
+          </p>
+        </details>
+        <details>
+          <summary>Audio won't play in the preview on Linux</summary>
+          <p>
+            The window uses your system's GStreamer codecs for playback. The
+            AppImage bundles them; a <code>.deb</code> install uses whatever your
+            distribution has. If a file's preview is silent, install the codec
+            packages:
+            <code>sudo apt install gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav</code>.
+            Transcription itself is unaffected either way — it doesn't use
+            GStreamer.
+          </p>
+        </details>
+        <details>
+          <summary>Transcription is slower than I expected</summary>
+          <p>
+            Speed depends on your CPU and the model. The built-in Base model runs
+            several times faster than real time on a modern machine; Medium and
+            Large (Turbo) are much more accurate and much slower. Transcribing a
+            range rather than a whole recording is the quickest win.
+          </p>
+        </details>
+        <details>
+          <summary>It says the model is unavailable</summary>
+          <p>
+            The Base model ships inside the installer and is copied into place on
+            first launch. If that copy failed — usually a full disk — open
+            <b>Settings</b>, check the free space shown under Privacy &amp;
+            storage, and download a model from the list.
+          </p>
+        </details>
+        <details>
+          <summary>Something else</summary>
+          <p>
+            Open an issue with what you were doing and what happened:
+            <a href="https://github.com/thisisankit27/utter-ai/issues/new/choose">report a bug</a>.
+            Turning on <b>Developer mode</b> in Settings adds the technical
+            detail to error messages, which helps a lot.
+          </p>
+        </details>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <p>
+          <a href="./">Home</a> ·
+          <a href="https://github.com/thisisankit27/utter-ai">Source</a> ·
+          <a href="https://github.com/thisisankit27/utter-ai/issues">Issues</a> ·
+          <a href="https://github.com/thisisankit27/utter-ai/blob/master/docs/PRIVACY.md">Privacy</a>
+        </p>
+        <p style="margin-top: 10px">
+          UtterAI is free software under the MIT license. Built with whisper.cpp,
+          ffmpeg and Tauri.
+        </p>
+      </div>
+    </footer>
+
+    <script src="download.js"></script>
+  </body>
+</html>

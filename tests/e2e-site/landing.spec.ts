@@ -32,14 +32,45 @@ test("primary navigation and anchors work", async ({ page }) => {
   await expect(page.locator("#faq")).toBeInViewport({ ratio: 0.03 });
 });
 
-test("download section points at real release artifacts", async ({ page }) => {
+test("download section routes every platform through the download page", async ({
+  page,
+}) => {
   await page.goto("/#download");
   await expect(page.locator("#download")).toBeInViewport({ ratio: 0.02 });
-  const links = page.locator('#download .opts a');
+  const links = page.locator("#download .opts a");
   await expect(links).toHaveCount(4);
-  for (const l of await links.all()) {
-    const href = await l.getAttribute("href");
-    expect(href).toMatch(/github\.com\/thisisankit27\/utter-ai\/releases/);
+
+  // Links go to download.html, which starts the file *and* shows the checksum
+  // and install steps — a bare asset URL leaves people with a saved file and
+  // no idea what to do with it.
+  const hrefs = await links.evaluateAll((els) =>
+    els.map((e) => e.getAttribute("href")),
+  );
+  expect(hrefs.sort()).toEqual([
+    "download.html?p=appimage",
+    "download.html?p=deb",
+    "download.html?p=msi",
+    "download.html?p=windows",
+  ]);
+});
+
+test("the hero download button offers a real file, not just a scroll", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const btn = page.locator("#primary-dl");
+  await expect(btn).toBeVisible();
+  const [text, href] = await Promise.all([
+    btn.textContent(),
+    btn.getAttribute("href"),
+  ]);
+  // Whatever platform the test browser reports, the label and the destination
+  // have to agree. The label used to promise "Download for Windows" while the
+  // link only jumped to a section further down the page.
+  if (/download for/i.test(text ?? "")) {
+    expect(href).toMatch(/^download\.html\?p=/);
+  } else {
+    expect(href).toBe("#download");
   }
 });
 

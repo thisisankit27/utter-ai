@@ -1,12 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { mediaSrc } from "@/lib/platform";
 import { useStore, type Media } from "@/lib/store";
 import { clock } from "@/lib/format";
 import { LANGUAGES } from "@/lib/format";
+import { useMediaPlayer } from "@/lib/useMediaPlayer";
+import { MediaElement } from "@/components/MediaElement";
 import { SpeechRibbon, extractPeaks } from "@/components/SpeechRibbon";
 import { Segmented, Select } from "@/components/ui";
 import {
+  IconAlert,
   IconArrowLeft,
+  IconDownload,
   IconPause,
   IconPlay,
   IconWave,
@@ -15,7 +19,10 @@ import {
 export function Review() {
   const media = useStore((s) => s.media);
   if (!media) return null;
-  return <ReviewInner media={media} />;
+  // Keyed by path: picking a different file (including by drag-and-drop, which
+  // swaps the media without leaving this screen) must not carry over the
+  // previous file's range mode, playhead or waveform.
+  return <ReviewInner key={media.path} media={media} />;
 }
 
 function ReviewInner({ media }: { media: Media }) {
@@ -34,14 +41,14 @@ function ReviewInner({ media }: { media: Media }) {
   const duration = media.info.duration_secs;
   const [peaks, setPeaks] = useState<number[] | null>(null);
   const [mode, setMode] = useState<"whole" | "range">(range ? "range" : "whole");
-  const [playing, setPlaying] = useState(false);
-  const [t, setT] = useState(0);
-  const mediaRef = useRef<HTMLVideoElement>(null);
 
-  const src = useMemo(() => mediaSrc(media.path), [media.path]);
+  const src = useMemo(() => mediaSrc(media.path) || null, [media.path]);
+  const player = useMediaPlayer(src);
+  const { playing, currentTime: t, error: playError, toggle: playPause, seek } = player;
 
   useEffect(() => {
     let alive = true;
+    if (!src) return;
     extractPeaks(src, media.info.size_bytes).then((p) => {
       if (alive) setPeaks(p);
     });
@@ -50,7 +57,10 @@ function ReviewInner({ media }: { media: Media }) {
     };
   }, [src, media.info.size_bytes]);
 
-  const working: [number, number] = range ?? [0, duration];
+  const working = useMemo<[number, number]>(
+    () => range ?? [0, duration],
+    [range, duration],
+  );
 
   function toggleMode(next: "whole" | "range") {
     setMode(next);
@@ -61,21 +71,27 @@ function ReviewInner({ media }: { media: Media }) {
   const installedIds = new Set(models?.installed.map((m) => m.id));
   const spanSecs = mode === "whole" ? duration : working[1] - working[0];
 
-  function seek(secs: number) {
-    if (mediaRef.current) mediaRef.current.currentTime = secs;
-    setT(secs);
-  }
-  function playPause() {
-    const el = mediaRef.current;
-    if (!el) return;
-    if (el.paused) {
-      el.play();
-      setPlaying(true);
-    } else {
-      el.pause();
-      setPlaying(false);
+  // Starting a run with a model that was never downloaded fails deep in the
+  // backend with "model unavailable". Catch it here, where we can say so.
+  const activeModelId = chosenModelId ?? models?.default_id ?? "base";
+  const activeModel = models?.selectable.find((m) => m.id === activeModelId);
+  const modelReady =
+    !models || !activeModel || activeModel.bundled || installedIds.has(activeModelId);
+
+  // In range mode the preview should play the range, not the whole file.
+  function previewToggle() {
+    if (mode === "range" && !playing) {
+      const [from, to] = working;
+      if (t < from || t >= to) seek(from);
     }
+    playPause();
   }
+
+  // Stop at the end of the selected range so "play" means "play what I chose".
+  useEffect(() => {
+    if (mode !== "range" || !playing) return;
+    if (t >= working[1]) player.pause();
+  }, [mode, playing, t, working, player]);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
@@ -101,13 +117,22 @@ function ReviewInner({ media }: { media: Media }) {
             </p>
           </div>
           <button
-            onClick={playPause}
-            className="btn-outline px-3"
+            onClick={previewToggle}
+            className="btn-outline px-3 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={!!playError}
+            title={playError ? playError.message : undefined}
             aria-label={playing ? "Pause preview" : "Play preview"}
           >
             {playing ? <IconPause className="h-4 w-4" /> : <IconPlay className="h-4 w-4" />}
           </button>
         </div>
+
+        {playError && (
+          <p className="flex items-start gap-2 border-b border-border/70 bg-amber/8 px-5 py-2.5 text-xs text-muted">
+            <IconAlert className="mt-px h-3.5 w-3.5 shrink-0 text-amber" />
+            {playError.message}
+          </p>
+        )}
 
         <div className="px-5 py-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -211,20 +236,23 @@ function ReviewInner({ media }: { media: Media }) {
         </div>
       </div>
 
-      <div className="mt-5 flex justify-end">
-        <button className="btn-primary px-6 py-3 text-[15px]" onClick={start}>
+      <div className="mt-5 flex items-center justify-end gap-3">
+        {!modelReady && (
+          <p className="flex items-center gap-1.5 text-xs text-muted">
+            <IconDownload className="h-3.5 w-3.5" />
+            {activeModel?.display} isn&apos;t downloaded yet — get it in Settings.
+          </p>
+        )}
+        <button
+          className="btn-primary px-6 py-3 text-[15px] disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={start}
+          disabled={!modelReady}
+        >
           Start transcription
         </button>
       </div>
 
-      {/* hidden preview surface */}
-      <video
-        ref={mediaRef}
-        src={src}
-        className="hidden"
-        onTimeUpdate={(e) => setT(e.currentTarget.currentTime)}
-        onEnded={() => setPlaying(false)}
-      />
+      <MediaElement src={src} elRef={player.ref} />
     </div>
   );
 }

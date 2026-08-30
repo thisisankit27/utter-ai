@@ -300,8 +300,11 @@ pub fn remove(id: &str) -> Result<()> {
     if let Some(spec) = find(id) {
         let path = spec.installed_path();
         if path.exists() {
-            std::fs::remove_file(path)?;
+            std::fs::remove_file(&path)?;
         }
+        // A half-finished download would otherwise sit in the model dir for
+        // ever, invisible in the UI but still taking up its several hundred MB.
+        let _ = std::fs::remove_file(path.with_extension("part"));
     }
     Ok(())
 }

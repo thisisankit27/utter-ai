@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useStore, type Route } from "@/lib/store";
 import { Menu, MenuItem, Toaster } from "@/components/ui";
 import { ErrorDialog } from "@/components/ErrorDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   IconHistory,
   IconMoon,
@@ -37,6 +38,7 @@ export default function App() {
   const reset = useStore((s) => s.reset);
   const updateSettings = useStore((s) => s.updateSettings);
   const job = useStore((s) => s.job);
+  const dark = useStore((s) => s.resolvedTheme) === "dark";
 
   useEffect(() => {
     init();
@@ -51,7 +53,6 @@ export default function App() {
 
   const Screen = screens[route];
   const showOnboarding = ready && settings && !settings.onboarding_complete;
-  const dark = document.documentElement.getAttribute("data-theme") === "dark";
 
   return (
     <div className="flex h-full flex-col bg-bg text-text">
@@ -73,7 +74,7 @@ export default function App() {
         <div className="flex items-center gap-1">
           <button
             className="btn-ghost px-2"
-            aria-label="Toggle theme"
+            aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
             onClick={() =>
               updateSettings({ theme: dark ? "light" : "dark" })
             }
@@ -144,6 +145,7 @@ export default function App() {
 
       {showOnboarding && <Onboarding />}
       <ErrorDialog />
+      <ConfirmDialog />
       <Toaster />
     </div>
   );
