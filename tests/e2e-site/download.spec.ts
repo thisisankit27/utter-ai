@@ -8,6 +8,14 @@ import AxeBuilder from "@axe-core/playwright";
  * this page comes from the release itself, so the tests check that what's shown
  * matches checksums.json rather than asserting hard-coded strings that would
  * quietly go stale at the next release.
+ *
+ * These deliberately do *not* touch the live GitHub API. An earlier version did,
+ * and it failed the moment it ran during a release: the API had already switched
+ * to the new tag while only one platform's artifacts were uploaded, so the page
+ * showed its (correct) "we can't confirm this build" state and the assertions
+ * called that a bug. Tests that read production data mid-change aren't testing
+ * the page, they're testing the weather. The live-data paths are covered by
+ * stubbing the API into each of its interesting states instead.
  */
 
 /** Stop the test from actually pulling ~150MB of installer. */
@@ -21,8 +29,41 @@ async function stubDownloads(page: Page) {
   );
 }
 
+/** The committed snapshot, read the same way the page reads it. */
 async function snapshot(page: Page) {
   return page.evaluate(() => fetch("checksums.json").then((r) => r.json()));
+}
+
+/**
+ * Serve a GitHub release built from the committed snapshot, so the page's
+ * live-API path runs against known data rather than whatever is published
+ * right now.
+ */
+async function stubRelease(page: Page) {
+  const snap = await page.request
+    .get("/checksums.json")
+    .then((r) => r.json() as Promise<Snapshot>);
+
+  await page.route(/api\.github\.com/, (r) =>
+    r.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        tag_name: snap.tag,
+        assets: snap.files.map((f) => ({
+          name: f.name,
+          size: f.size,
+          browser_download_url: `https://github.com/thisisankit27/utter-ai/releases/download/${snap.tag}/${f.name}`,
+        })),
+      }),
+    }),
+  );
+}
+
+interface Snapshot {
+  tag: string;
+  version: string;
+  files: { name: string; sha256: string; size: number }[];
 }
 
 const VARIANTS: [string, RegExp][] = [
@@ -37,6 +78,7 @@ for (const [param, pattern] of VARIANTS) {
     page,
   }) => {
     await stubDownloads(page);
+    await stubRelease(page);
     await page.goto(`/download.html?p=${param}`);
 
     const name = page.locator("#dl-name");
@@ -70,6 +112,7 @@ test("the download starts on its own and can be retriggered", async ({ page }) =
     });
   });
 
+  await stubRelease(page);
   await page.goto("/download.html?p=deb");
   await expect.poll(() => asked.length, { timeout: 15_000 }).toBe(1);
   expect(asked[0]).toMatch(/\.deb$/);
@@ -92,6 +135,7 @@ test("switching platform re-renders without starting another download", async ({
     });
   });
 
+  await stubRelease(page);
   await page.goto("/download.html?p=windows");
   await expect.poll(() => downloads, { timeout: 15_000 }).toBe(1);
 
@@ -134,6 +178,7 @@ test("no console errors, no horizontal overflow", async ({ page }) => {
   page.on("pageerror", (e) => errors.push(String(e)));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   await stubDownloads(page);
+  await stubRelease(page);
 
   await page.goto("/download.html?p=deb");
   await page.waitForTimeout(2000);
@@ -153,6 +198,7 @@ test("no console errors, no horizontal overflow", async ({ page }) => {
 
 test("no critical accessibility violations", async ({ page }) => {
   await stubDownloads(page);
+  await stubRelease(page);
   await page.goto("/download.html?p=windows");
   await page.waitForTimeout(1500);
   const results = await new AxeBuilder({ page })
@@ -162,4 +208,69 @@ test("no critical accessibility violations", async ({ page }) => {
     (v) => v.impact === "critical" || v.impact === "serious",
   );
   expect(critical.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+});
+
+test("mid-release, a platform with no artifact yet gets a link, not a guess", async ({
+  page,
+}) => {
+  // Exactly the state this page is in for ~25 minutes during a release: the API
+  // has moved to the new tag, but only the first matrix leg's artifacts exist.
+  // See issue #48. The Windows entry is simply absent.
+  await stubDownloads(page);
+  await page.route(/api\.github\.com/, (r) =>
+    r.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        tag_name: "v9.9.9",
+        assets: [
+          {
+            name: "UtterAI_9.9.9_amd64.deb",
+            size: 1,
+            browser_download_url:
+              "https://github.com/thisisankit27/utter-ai/releases/download/v9.9.9/UtterAI_9.9.9_amd64.deb",
+          },
+        ],
+      }),
+    }),
+  );
+  await page.goto("/download.html?p=windows");
+
+  // No invented filename, no hash from the previous release, and a link that works.
+  const link = page.getByRole("link", { name: /go to downloads/i });
+  await expect(link).toBeVisible({ timeout: 15_000 });
+  await expect(link).toHaveAttribute("href", /github\.com\/.*\/releases/);
+  await expect(page.locator("#verify")).toBeHidden();
+});
+
+test("a newer release than the snapshot shows the file but no stale hash", async ({
+  page,
+}) => {
+  // The API has the new release; checksums.json hasn't caught up yet. The file
+  // is real, so offer it — but the only hash we hold belongs to the previous
+  // build, so show none at all rather than one that won't match.
+  await stubDownloads(page);
+  await page.route(/api\.github\.com/, (r) =>
+    r.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        tag_name: "v9.9.9",
+        assets: [
+          {
+            name: "UtterAI_9.9.9_amd64.deb",
+            size: 123,
+            browser_download_url:
+              "https://github.com/thisisankit27/utter-ai/releases/download/v9.9.9/UtterAI_9.9.9_amd64.deb",
+          },
+        ],
+      }),
+    }),
+  );
+  await page.goto("/download.html?p=deb");
+
+  await expect(page.locator("#dl-name")).toHaveText("UtterAI_9.9.9_amd64.deb", {
+    timeout: 15_000,
+  });
+  await expect(page.locator("#verify")).toBeHidden();
 });
