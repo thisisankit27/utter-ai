@@ -4,11 +4,13 @@ on:
   push:
     branches: [master]
     paths: ["site/**", ".github/workflows/pages.yml"]
-  # The download-counter refresh commits site/downloads.json with the built-in
-  # GITHUB_TOKEN, which by design does not trigger the push event above. Redeploy
-  # explicitly when that workflow finishes so the live counter stays current.
+  # The refresh job commits site/downloads.json and site/checksums.json with the
+  # built-in GITHUB_TOKEN, which by design does not trigger the push event above.
+  # Redeploy explicitly when it finishes so the live counter and the checksums on
+  # the download page stay current. (This name must match `name:` in
+  # downloads.yml — a rename silently stops the trigger firing.)
   workflow_run:
-    workflows: ["Refresh download counter"]
+    workflows: ["Refresh download data"]
     types: [completed]
   workflow_dispatch:
 
