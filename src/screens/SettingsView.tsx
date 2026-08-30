@@ -10,6 +10,7 @@ import { bytes } from "@/lib/format";
 import { LANGUAGES } from "@/lib/format";
 import type { DependencyReport } from "@/lib/types";
 import { Segmented, Select, Spinner, Switch } from "@/components/ui";
+import { confirmAction } from "@/components/ConfirmDialog";
 import { IconCheck, IconDownload, IconShield, IconTrash, IconX } from "@/components/icons";
 
 const EXPORT_DEFAULTS = [
@@ -62,27 +63,43 @@ export function SettingsView() {
 
   const installed = new Map(models?.installed.map((m) => [m.id, m]) ?? []);
 
+  function clearProgress(id: string) {
+    setBusy((b) => (b === id ? null : b));
+    setProgress((c) => {
+      const n = { ...c };
+      delete n[id];
+      return n;
+    });
+  }
+
   async function download(id: string) {
     setBusy(id);
     setProgress((c) => ({ ...c, [id]: 0 }));
     try {
       await api.downloadModel(id);
     } catch (e) {
-      setBusy(null);
-      setProgress((c) => {
-        const n = { ...c };
-        delete n[id];
-        return n;
-      });
+      clearProgress(id);
+      // Cancelling is something the user just asked for — a red error dialog
+      // saying "Transcription cancelled" is not the right answer to it.
+      if ((e as { code?: string })?.code === "cancelled") {
+        toast("Download cancelled");
+        return;
+      }
       showError(e);
     }
   }
-  async function cancelDl() {
+  async function cancelDl(id: string) {
     await api.cancelDownload().catch(() => {});
-    setBusy(null);
-    setProgress({});
+    clearProgress(id);
   }
   async function remove(id: string) {
+    if (
+      !(await confirmAction(
+        `Remove ${models?.selectable.find((m) => m.id === id)?.display ?? "this model"}?`,
+        "You can download it again at any time.",
+      ))
+    )
+      return;
     await api.removeModel(id).catch(() => {});
     await refreshModels();
     api.dependencyCheck().then(setDep).catch(() => {});
@@ -148,7 +165,7 @@ export function SettingsView() {
                         )}
                       </>
                     ) : downloading ? (
-                      <button className="btn-ghost px-2 py-1 text-xs" onClick={cancelDl}>
+                      <button className="btn-ghost px-2 py-1 text-xs" onClick={() => cancelDl(m.id)}>
                         <IconX className="h-3.5 w-3.5" /> Cancel
                       </button>
                     ) : (

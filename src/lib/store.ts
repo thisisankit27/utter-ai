@@ -62,6 +62,8 @@ interface AppStore {
   ready: boolean;
   route: Route;
   settings: Settings | null;
+  /** The theme actually in effect, after resolving "system". */
+  resolvedTheme: "light" | "dark";
   models: ModelCatalog | null;
   history: HistoryEntry[];
 
@@ -127,6 +129,7 @@ export const useStore = create<AppStore>((set, get) => ({
   ready: false,
   route: "intake",
   settings: null,
+  resolvedTheme: "light",
   models: null,
   history: [],
 
@@ -249,6 +252,10 @@ export const useStore = create<AppStore>((set, get) => ({
       "data-theme",
       dark ? "dark" : "light",
     );
+    // Kept in the store, not read back off the DOM at render time: with
+    // theme="system" an OS switch changes the attribute without changing any
+    // React state, so the header's sun/moon icon used to stay on the old one.
+    set({ resolvedTheme: dark ? "dark" : "light" });
   },
 
   loadMedia: async (path) => {
@@ -367,13 +374,19 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   saveCurrentToHistory: async () => {
-    const { media, range, transcript } = get();
+    const { media, range, transcript, activeEntryId, history } = get();
     if (!media || !transcript) return;
+    // Re-saving an entry (an inline edit, say) must keep its original date.
+    // Stamping "now" moved week-old transcripts to the top of the list and
+    // relabelled them "just now" every time a word was corrected.
+    const existing = activeEntryId
+      ? history.find((h) => h.id === activeEntryId)
+      : undefined;
     const entry: HistoryEntry = {
-      id: get().activeEntryId ?? newLocalId(),
+      id: activeEntryId ?? newLocalId(),
       source_path: media.path,
       source_name: transcript.source_name,
-      created_at: Math.floor(Date.now() / 1000),
+      created_at: existing?.created_at ?? Math.floor(Date.now() / 1000),
       duration: transcript.duration,
       range,
       model_id: transcript.model_id,

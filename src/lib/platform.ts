@@ -76,6 +76,18 @@ function mockToneUrl(): string {
   return toneUrl;
 }
 
+/** Is the file still where we last saw it? Used before offering playback. */
+export async function fileExists(path: string): Promise<boolean> {
+  if (MOCK) return !/missing/i.test(path);
+  try {
+    const { exists } = await import("@tauri-apps/plugin-fs");
+    return await exists(path);
+  } catch {
+    // If we can't tell, assume it's there — the player degrades honestly.
+    return true;
+  }
+}
+
 export async function revealPath(path: string): Promise<void> {
   if (MOCK) return;
   const { openPath } = await import("@tauri-apps/plugin-opener");

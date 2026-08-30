@@ -84,6 +84,10 @@ export const config: WebdriverIO.Config = {
     }
     fs.mkdirSync(path.join(ROOT, "tests/artifacts"), { recursive: true });
     fs.writeFileSync(SENTINEL, FIXTURE);
+    // The app only honours the autoload sentinel when this is set, so a shipped
+    // build can't be steered by a stray file in the temp directory. It reaches
+    // the app by inheritance: wdio → tauri-driver → the app.
+    process.env.UTTERAI_E2E_FILE = SENTINEL;
   },
   onComplete: () => {
     try {

@@ -1,6 +1,7 @@
 import { useStore } from "@/lib/store";
 import { api } from "@/lib/ipc";
 import { clock, languageName, relativeTime } from "@/lib/format";
+import { confirmAction } from "@/components/ConfirmDialog";
 import { IconFile, IconHistory, IconTrash } from "@/components/icons";
 
 export function History() {
@@ -10,12 +11,14 @@ export function History() {
   const toast = useStore((s) => s.toast);
   const go = useStore((s) => s.go);
 
-  async function remove(id: string) {
+  async function remove(id: string, name: string) {
+    if (!(await confirmAction(`Remove "${name}" from history?`, "The transcript is deleted. Your original media file is untouched.", { confirmLabel: "Remove" }))) return;
     await api.deleteHistory(id).catch(() => {});
     await refresh();
     toast("Removed from history");
   }
   async function clearAll() {
+    if (!(await confirmAction("Clear all history?", `All ${history.length} saved transcripts are deleted. Your media files are untouched.`, { confirmLabel: "Clear all" }))) return;
     await api.clearHistory().catch(() => {});
     await refresh();
     toast("History cleared");
@@ -68,7 +71,7 @@ export function History() {
               <button
                 className="btn-ghost px-2 text-faint hover:text-rose"
                 aria-label="Delete"
-                onClick={() => remove(h.id)}
+                onClick={() => remove(h.id, h.source_name)}
               >
                 <IconTrash className="h-4 w-4" />
               </button>

@@ -197,8 +197,25 @@ fn cancel_download(state: State<AppState>) {
 }
 
 #[tauri::command]
-fn remove_model(id: String) -> Result<(), String> {
-    model::remove(&id).map_err(|e| e.to_string())
+fn remove_model(state: State<AppState>, id: String) -> Result<(), String> {
+    let bundled = model::bundled_spec().id;
+    if id == bundled {
+        return Err("the built-in model can't be removed".into());
+    }
+    model::remove(&id).map_err(|e| e.to_string())?;
+    // Removing the model that was the default used to leave `default_model`
+    // pointing at a file that no longer exists, so every later transcription
+    // failed with "model unavailable" and no obvious cause. Fall back to the
+    // built-in one, which is always present.
+    let mut settings = state.store.settings();
+    if settings.default_model == id {
+        settings.default_model = bundled.to_string();
+        state
+            .store
+            .set_settings(settings)
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -489,14 +506,16 @@ fn cancel_transcription(state: State<AppState>, job_id: String) {
     }
 }
 
-/// Test hook: the end-to-end suite writes a media path to a sentinel file
-/// (`$UTTERAI_E2E_FILE` or the OS temp dir) and the UI loads it on boot,
-/// avoiding the native file dialog. Returns `None` in a normal run.
+/// Test hook: the end-to-end suite points `$UTTERAI_E2E_FILE` at a sentinel
+/// file holding a media path, and the UI loads it on boot instead of opening
+/// the native file dialog. Returns `None` in a normal run.
+///
+/// The env var is required. It used to fall back to a fixed name in the OS temp
+/// directory, which meant any file another process happened to leave there
+/// would be opened automatically by a shipped build.
 #[tauri::command]
 fn e2e_autoload() -> Option<String> {
-    let sentinel = std::env::var("UTTERAI_E2E_FILE")
-        .map(std::path::PathBuf::from)
-        .unwrap_or_else(|_| std::env::temp_dir().join("utterai-e2e-autoload"));
+    let sentinel = std::path::PathBuf::from(std::env::var_os("UTTERAI_E2E_FILE")?);
     let path = std::fs::read_to_string(&sentinel).ok()?;
     let path = path.trim();
     if path.is_empty() || !std::path::Path::new(path).is_file() {

@@ -291,11 +291,19 @@ export async function extractPeaks(
   try {
     const res = await fetch(assetUrl);
     const buf = await res.arrayBuffer();
-    const Ctx =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext })
-        .webkitAudioContext;
-    const ctx = new Ctx();
+    // Decode into an 8 kHz mono offline context rather than the hardware rate.
+    // The ribbon only needs ~900 amplitude buckets, and decoding a 90-minute
+    // recording at 44.1 kHz stereo costs the better part of a gigabyte of
+    // Float32 for a picture that is 900 numbers wide.
+    const Offline =
+      window.OfflineAudioContext ||
+      (window as unknown as { webkitOfflineAudioContext: typeof OfflineAudioContext })
+        .webkitOfflineAudioContext;
+    const ctx: BaseAudioContext = Offline
+      ? new Offline(1, 1, 8000)
+      : new (window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext })
+            .webkitAudioContext)();
     const audio = await ctx.decodeAudioData(buf);
     const data = audio.getChannelData(0);
     const block = Math.floor(data.length / buckets) || 1;
@@ -310,7 +318,7 @@ export async function extractPeaks(
       peaks.push(p);
       if (p > max) max = p;
     }
-    void ctx.close();
+    if ("close" in ctx && typeof ctx.close === "function") void ctx.close();
     return peaks.map((p) => Math.min(1, (p / max) ** 0.8));
   } catch {
     return null;
