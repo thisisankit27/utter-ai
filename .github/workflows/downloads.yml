@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 */6 * * *"
   workflow_dispatch:
+  # Only fires for a release published by a *person*. A release published by a
+  # workflow using the built-in GITHUB_TOKEN — which is how ours are made —
+  # raises no event, by design, so this never triggers for our own releases.
+  # The release workflow dispatches this job explicitly instead; see the
+  # "Refresh the site's download data" step in release.yml.
   release:
     types: [published]
 

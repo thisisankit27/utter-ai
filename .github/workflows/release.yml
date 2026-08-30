@@ -124,12 +124,20 @@ jobs:
           cat checksums.txt
           gh release upload "${{ env.TAG }}" checksums.txt -R "${{ github.repository }}" --clobber
 
-      # The download page reads its SHA-256s out of that file. The
-      # `release: published` event fires when tauri-action publishes, which is
-      # *before* this job has merged and uploaded checksums.txt — so the refresh
-      # that event triggers finds nothing and leaves the site showing the
-      # previous release's hashes until the next 6-hourly run. Kick it off now
-      # that the file actually exists.
+      # The download page reads its SHA-256s out of that file, via
+      # site/checksums.json, which downloads.yml regenerates. That refresh has
+      # to be dispatched from here for two independent reasons, both confirmed
+      # on the v1.2.0 release:
+      #
+      #   1. downloads.yml's `release: published` trigger never fires for our
+      #      releases at all — tauri-action publishes with the built-in
+      #      GITHUB_TOKEN, and events raised by that token deliberately do not
+      #      start new workflow runs.
+      #   2. Even if it did, it would fire when tauri-action publishes at the
+      #      end of the *first* matrix leg, before checksums.txt exists here.
+      #
+      # Without this step the site keeps the previous release's hashes until the
+      # next 6-hourly run.
       - name: Refresh the site's download data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
