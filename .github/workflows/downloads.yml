@@ -1,4 +1,4 @@
-name: Refresh download counter
+name: Refresh download data
 
 on:
   schedule:
@@ -33,12 +33,56 @@ jobs:
               note: "Refreshed every 6h by .github/workflows/downloads.yml",
             };
             fs.writeFileSync('site/downloads.json', JSON.stringify(payload, null, 2) + '\n');
+
+      # The download page shows a SHA-256 for each installer. It is read out of
+      # the release's own checksums.txt — which the release workflow produces by
+      # running sha256sum over the artifacts it just built — so no hash on the
+      # site is ever typed by a human.
+      - name: Snapshot release checksums
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const rel = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner, repo: context.repo.repo,
+            }).then(r => r.data).catch(() => null);
+            if (!rel) return core.info('no published release yet — leaving checksums.json alone');
+
+            const sums = rel.assets.find(a => a.name === 'checksums.txt');
+            if (!sums) return core.warning(`${rel.tag_name} has no checksums.txt — leaving checksums.json alone`);
+
+            const body = await github.request(sums.url, {
+              headers: { accept: 'application/octet-stream' },
+            }).then(r => Buffer.from(r.data).toString('utf8'));
+
+            const installer = /\.(exe|msi|deb|AppImage)$/;
+            const files = [];
+            for (const line of body.split('\n')) {
+              // sha256sum writes "<hash>  name" on Linux and "<hash> *name" on
+              // Windows (binary mode); accept both.
+              const m = line.trim().match(/^([0-9a-f]{64})\s+\*?(.+)$/);
+              if (!m || !installer.test(m[2])) continue;
+              const asset = rel.assets.find(a => a.name === m[2]);
+              files.push({ name: m[2], sha256: m[1], size: asset ? asset.size : 0 });
+            }
+            if (!files.length) return core.warning('no installer hashes parsed — leaving checksums.json alone');
+            files.sort((a, b) => a.name.localeCompare(b.name));
+
+            fs.writeFileSync('site/checksums.json', JSON.stringify({
+              version: rel.tag_name.replace(/^v/, ''),
+              tag: rel.tag_name,
+              published: rel.published_at,
+              files,
+              note: "Generated from the release's own checksums.txt by .github/workflows/downloads.yml — never edited by hand.",
+            }, null, 2) + '\n');
+            core.info(`wrote ${files.length} checksums for ${rel.tag_name}`);
+
       - name: Commit if changed
         run: |
-          if ! git diff --quiet site/downloads.json; then
+          if ! git diff --quiet site/downloads.json site/checksums.json; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add site/downloads.json
-            git commit -m "chore: refresh download counter"
+            git add site/downloads.json site/checksums.json
+            git commit -m "chore: refresh download data"
             git push
           fi

@@ -41,7 +41,11 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
-      command: "npx serve site -l 4173 -s",
+      // Match GitHub Pages: serve the files as they are. `-s` (SPA) used to
+      // send every unknown path to index.html, and serve's default clean-URLs
+      // 301 /download.html to /download *and drop the query string* — between
+      // them the download page could not be tested at all.
+      command: "npx serve site -l 4173 -c ../tests/serve.json",
       url: "http://localhost:4173",
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,

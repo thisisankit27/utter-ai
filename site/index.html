@@ -221,14 +221,14 @@
           <span class="fmt">.md</span>
           <span class="fmt">.json</span>
         </div>
-        <pre class="sample reveal">
+        <pre class="sample reveal" tabindex="0" role="region" aria-label="Example SRT subtitle output">
 <span class="ts">1</span>
 <span class="ts">00:00:00,000 --&gt; 00:00:03,480</span>
 And so, my fellow Americans, ask not
 
 <span class="ts">2</span>
 <span class="ts">00:00:03,480 --&gt; 00:00:07,020</span>
-what your country can do for you</span></pre>
+what your country can do for you</pre>
       </section>
 
       <section class="wrap" id="features">
@@ -260,8 +260,8 @@ what your country can do for you</span></pre>
                 Windows
               </h3>
               <div class="opts" data-platform="windows">
-                <a href="https://github.com/thisisankit27/utter-ai/releases/latest" data-ext="exe">Installer (.exe) <span>—</span></a>
-                <a href="https://github.com/thisisankit27/utter-ai/releases/latest" data-ext="msi">MSI package (.msi) <span>—</span></a>
+                <a href="download.html?p=windows" data-ext="exe">Installer (.exe) <span>—</span></a>
+                <a href="download.html?p=msi" data-ext="msi">MSI package (.msi) <span>—</span></a>
               </div>
             </div>
             <div class="dl-card reveal">
@@ -270,13 +270,14 @@ what your country can do for you</span></pre>
                 Linux
               </h3>
               <div class="opts" data-platform="linux">
-                <a href="https://github.com/thisisankit27/utter-ai/releases/latest" data-ext="AppImage">AppImage <span>—</span></a>
-                <a href="https://github.com/thisisankit27/utter-ai/releases/latest" data-ext="deb">Debian / Ubuntu (.deb) <span>—</span></a>
+                <a href="download.html?p=appimage" data-ext="AppImage">AppImage <span>—</span></a>
+                <a href="download.html?p=deb" data-ext="deb">Debian / Ubuntu (.deb) <span>—</span></a>
               </div>
             </div>
           </div>
           <p class="dl-note">
-            Every release is built by GitHub Actions with published checksums.
+            Every release is built by GitHub Actions, with a SHA-256 for each file
+            shown on the download page.
             <a href="https://github.com/thisisankit27/utter-ai/releases">All releases and notes →</a>
           </p>
         </div>
@@ -287,7 +288,7 @@ what your country can do for you</span></pre>
           <p class="eyebrow">Questions</p>
           <h2>Good to know.</h2>
         </div>
-        <details reveal><summary>Does anything get uploaded?</summary><p>No. Transcription happens on your computer. UtterAI only uses the network when you choose to download a larger model, and this website only reads the public download count from GitHub.</p></details>
+        <details><summary>Does anything get uploaded?</summary><p>No. Transcription happens on your computer. UtterAI only uses the network when you choose to download a larger model, and this website only reads the public download count from GitHub.</p></details>
         <details><summary>Do I need an OpenAI or other API key?</summary><p>No. The Whisper models run locally through whisper.cpp. There's no key and no per‑minute cost.</p></details>
         <details><summary>How accurate is it?</summary><p>The built‑in Base model handles clear speech well. For accents, crosstalk or noisy audio, download the Small, Medium or Large (Turbo) model from Settings — accuracy goes up, speed comes down.</p></details>
         <details><summary>What files can it read?</summary><p>Common audio and video: MP3, WAV, M4A, AAC, FLAC, OGG, Opus, MP4, MKV, MOV, WebM and more. If a file has an audio track, UtterAI can usually transcribe it.</p></details>

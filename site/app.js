@@ -1,6 +1,29 @@
 // UtterAI landing page — progressive enhancement only.
 const REPO = "thisisankit27/utter-ai";
 
+/* One shared release fetch. The counter and the asset sizes both need the same
+   data, and the API is rate-limited to 60 requests an hour per IP for anonymous
+   callers — asking twice per page load, plus a poll, used to burn through that
+   quickly enough that a few open tabs would start getting 403s. */
+let releasesPromise;
+function allReleases() {
+  releasesPromise ??= fetch(
+    `https://api.github.com/repos/${REPO}/releases?per_page=100`,
+    { headers: { Accept: "application/vnd.github+json" } },
+  )
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+    .catch(() => null);
+  return releasesPromise;
+}
+async function latestRelease() {
+  const all = await allReleases();
+  return all?.find((r) => !r.draft && !r.prerelease) ?? all?.[0] ?? null;
+}
+/** Drop the cache so a refresh actually re-asks. */
+function invalidateReleases() {
+  releasesPromise = undefined;
+}
+
 /* nav shadow on scroll */
 const nav = document.querySelector("header.nav");
 const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 8);
@@ -72,16 +95,27 @@ document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
   }
 })();
 
-/* OS detection for the primary button */
+/* OS detection for the primary button. The label used to promise a download
+   while the link only scrolled to a section; now it goes to the download page,
+   which starts the right file and explains the install. */
 (function detectOS() {
-  const p = navigator.userAgent + " " + navigator.platform;
-  let os = "linux";
-  if (/Win/i.test(p)) os = "windows";
-  else if (/Mac/i.test(p)) os = "mac";
+  const p = navigator.userAgent + " " + (navigator.platform || "");
   const btn = document.getElementById("primary-dl");
-  if (os === "windows") btn.textContent = "Download for Windows";
-  else if (os === "mac") btn.textContent = "View downloads";
-  else btn.textContent = "Download for Linux";
+  if (!btn) return;
+  if (/Win/i.test(p)) {
+    btn.textContent = "Download for Windows";
+    btn.href = "download.html?p=windows";
+  } else if (/Mac/i.test(p)) {
+    // No Mac build yet — don't offer one.
+    btn.textContent = "View downloads";
+    btn.href = "#download";
+  } else if (/Ubuntu|Debian/i.test(p)) {
+    btn.textContent = "Download for Ubuntu";
+    btn.href = "download.html?p=deb";
+  } else {
+    btn.textContent = "Download for Linux";
+    btn.href = "download.html?p=appimage";
+  }
 })();
 
 /* live download counter — real data only, refreshes while the tab is open */
@@ -129,12 +163,8 @@ document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
   // rate-limit fallback. Never fabricates — falls back to a plain label only
   // when neither source yields a number.
   const fromApi = async () => {
-    const r = await fetch(
-      `https://api.github.com/repos/${REPO}/releases?per_page=100`,
-      { headers: { Accept: "application/vnd.github+json" } },
-    );
-    if (!r.ok) throw new Error(String(r.status));
-    const releases = await r.json();
+    const releases = await allReleases();
+    if (!releases) throw new Error("unavailable");
     return releases
       .flatMap((rel) => rel.assets || [])
       .filter((a) => !IGNORE.test(a.name))
@@ -177,35 +207,36 @@ document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
     if (label) label.textContent = " & open source";
   });
 
-  // Keep it live: re-check every 90s while the page is visible.
-  setInterval(() => {
-    if (document.visibilityState === "visible") refresh();
-  }, 90_000);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") refresh();
-  });
+  // Keep it reasonably live without eating the anonymous rate limit. A
+  // download counter does not need to be accurate to the minute.
+  const RECHECK_MS = 600_000;
+  let lastCheck = Date.now();
+  const maybeRefresh = () => {
+    if (document.visibilityState !== "visible") return;
+    if (Date.now() - lastCheck < RECHECK_MS) return;
+    lastCheck = Date.now();
+    invalidateReleases();
+    refresh();
+  };
+  setInterval(maybeRefresh, 60_000);
+  document.addEventListener("visibilitychange", maybeRefresh);
 })();
 
-/* fill in real asset links + sizes from the latest release */
+/* Fill in real sizes from the latest release. The hrefs deliberately stay
+   pointed at download.html, which starts the download *and* shows the checksum
+   and install steps — a bare asset link drops people onto a saved file with no
+   idea what to do next. */
 (async function assets() {
-  try {
-    const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
-    if (!r.ok) return;
-    const rel = await r.json();
-    const byExt = {};
-    for (const a of rel.assets || []) {
-      const m = a.name.match(/\.(exe|msi|AppImage|deb)$/);
-      if (m) byExt[m[1]] = a;
-    }
-    document.querySelectorAll(".dl-card .opts a[data-ext]").forEach((a) => {
-      const asset = byExt[a.dataset.ext];
-      if (asset) {
-        a.href = asset.browser_download_url;
-        const mb = (asset.size / 1048576).toFixed(0);
-        a.querySelector("span").textContent = mb + " MB";
-      }
-    });
-  } catch {
-    /* links stay pointed at the releases page */
+  const rel = await latestRelease();
+  if (!rel) return;
+  const byExt = {};
+  for (const a of rel.assets || []) {
+    const m = a.name.match(/\.(exe|msi|AppImage|deb)$/);
+    if (m) byExt[m[1]] = a;
   }
+  document.querySelectorAll(".dl-card .opts a[data-ext]").forEach((a) => {
+    const asset = byExt[a.dataset.ext];
+    const span = a.querySelector("span");
+    if (asset && span) span.textContent = (asset.size / 1048576).toFixed(0) + " MB";
+  });
 })();
