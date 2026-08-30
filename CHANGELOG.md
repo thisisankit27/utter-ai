@@ -4,6 +4,17 @@ All notable changes to UtterAI are recorded here. The format is loosely based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] — 2026-08-30
+
+### Fixed
+
+- **Transcription failing with "Generic whisper error … Error code: -6"** on some
+  machines. `whisper-rs` 0.16's safe abort-callback wrapper is mistyped, so
+  whisper.cpp read an arbitrary byte as its "should I stop?" flag and aborted the
+  encode at random — reproducibly on some systems, never on others. UtterAI now
+  installs that callback itself with the correct type. A cancelled run is also
+  now reported as "cancelled" rather than as a failure.
+
 ## [1.1.0] — 2026-08-29
 
 ### Added
@@ -60,5 +71,6 @@ it — all on your own machine, with no account and no upload.
   planned.
 - Very large files work but take proportionally longer; trim to the part you need.
 
+[1.1.1]: https://github.com/thisisankit27/utter-ai/releases/tag/v1.1.1
 [1.1.0]: https://github.com/thisisankit27/utter-ai/releases/tag/v1.1.0
 [1.0.0]: https://github.com/thisisankit27/utter-ai/releases/tag/v1.0.0
