@@ -92,13 +92,20 @@ test("a disabled button is visibly dimmed", async ({ page }) => {
 
   const start = page.getByRole("button", { name: /start transcription/i });
   await expect(start).toBeDisabled();
-  const opacity = await start.evaluate(
-    (n) => getComputedStyle(n as HTMLElement).opacity,
-  );
-  expect(
-    parseFloat(opacity),
-    "a disabled button that renders at full opacity looks clickable",
-  ).toBeLessThan(0.9);
+
+  // `.btn` transitions all properties over 150ms, so read it until it settles
+  // rather than catching it on its way down from 1.
+  await expect
+    .poll(
+      () =>
+        start.evaluate((n) =>
+          parseFloat(getComputedStyle(n as HTMLElement).opacity),
+        ),
+      {
+        message: "a disabled button that renders at full opacity looks clickable",
+      },
+    )
+    .toBeLessThan(0.9);
 });
 
 test("the update banner paints its own background", async ({ page }) => {

@@ -137,8 +137,12 @@ document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
     const start = performance.now();
     const dur = 900;
     const tick = (now) => {
-      const k = Math.min(1, (now - start) / dur);
-      shown = Math.round(from + (target - from) * (1 - Math.pow(1 - k, 3)));
+      // Clamp both ends. requestAnimationFrame hands back the timestamp of the
+      // frame's start, which can predate the performance.now() captured in the
+      // same task; a negative k made the easing overshoot backwards and the
+      // counter briefly rendered "-1".
+      const k = Math.min(1, Math.max(0, (now - start) / dur));
+      shown = Math.max(0, Math.round(from + (target - from) * (1 - Math.pow(1 - k, 3))));
       el.textContent = fmt(shown);
       if (k < 1) raf = requestAnimationFrame(tick);
       else shown = target;

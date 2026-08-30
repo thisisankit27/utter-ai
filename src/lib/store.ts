@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api, asUserError, onJobUpdate } from "./ipc";
+import { fileExists } from "./platform";
 import {
   checkForUpdate,
   installStyle,
@@ -11,6 +12,7 @@ import { confirmAction } from "@/components/ConfirmDialog";
 import type {
   HistoryEntry,
   JobStage,
+  JobUpdate,
   MediaInfo,
   ModelCatalog,
   Segment,
@@ -77,6 +79,8 @@ interface AppStore {
   history: HistoryEntry[];
 
   media: Media | null;
+  /** True when a history entry's source recording is no longer on disk. */
+  sourceMissing: boolean;
   /** null means "the whole file". */
   range: [number, number] | null;
   chosenModelId: string | null;
@@ -114,7 +118,7 @@ interface AppStore {
   refreshModels: () => Promise<void>;
   refreshHistory: () => Promise<void>;
   saveCurrentToHistory: () => Promise<void>;
-  openHistoryEntry: (entry: HistoryEntry) => void;
+  openHistoryEntry: (entry: HistoryEntry) => Promise<void>;
   updateSettings: (patch: Partial<Settings>) => Promise<void>;
 
   showError: (e: unknown) => void;
@@ -153,6 +157,7 @@ export const useStore = create<AppStore>((set, get) => ({
   history: [],
 
   media: null,
+  sourceMissing: false,
   range: null,
   chosenModelId: null,
   chosenLanguage: null,
@@ -303,6 +308,7 @@ export const useStore = create<AppStore>((set, get) => ({
       const info = await api.probeMedia(path);
       set({
         media: { path, info },
+        sourceMissing: false,
         range: null,
         transcript: null,
         activeEntryId: null,
@@ -326,7 +332,22 @@ export const useStore = create<AppStore>((set, get) => ({
       jobUnlisten();
       jobUnlisten = null;
     }
+    // `start_transcription` spawns the worker and returns the id, but the
+    // worker can emit its first events — a short clip's "done", even — before
+    // that reply crosses the IPC boundary. Anything for an id we don't know yet
+    // is parked rather than dropped, and replayed once the id arrives.
+    let liveJobId: string | null = null;
+    const parked: JobUpdate[] = [];
+
     jobUnlisten = await onJobUpdate((u) => {
+      if (liveJobId === null) {
+        parked.push(u);
+        return;
+      }
+      apply(u);
+    });
+
+    function apply(u: JobUpdate) {
       const cur = get().job;
       if (!cur || u.job_id !== cur.id) return;
       if (u.phase === "progress") {
@@ -350,7 +371,7 @@ export const useStore = create<AppStore>((set, get) => ({
         if (u.error.code !== "cancelled") get().showError(u.error);
         else set({ route: "review" });
       }
-    });
+    }
 
     try {
       const id = await api.startTranscription({
@@ -371,6 +392,8 @@ export const useStore = create<AppStore>((set, get) => ({
         },
         route: "working",
       });
+      liveJobId = id;
+      for (const u of parked.splice(0)) apply(u);
     } catch (e) {
       get().showError(e);
     }
@@ -390,6 +413,7 @@ export const useStore = create<AppStore>((set, get) => ({
   reset: () =>
     set({
       media: null,
+      sourceMissing: false,
       range: null,
       job: null,
       transcript: null,
@@ -442,7 +466,28 @@ export const useStore = create<AppStore>((set, get) => ({
     }
   },
 
-  openHistoryEntry: (entry) => {
+  openHistoryEntry: async (entry) => {
+    // Show the transcript immediately — it's stored with the entry and doesn't
+    // depend on the media still being there.
+    set({
+      media: null,
+      sourceMissing: false,
+      range: entry.range,
+      transcript: entry.transcript,
+      activeEntryId: entry.id,
+      route: "transcript",
+    });
+
+    // Then decide whether playback is actually on offer. A history entry can
+    // easily outlive its recording — moved, renamed, deleted, on a drive that
+    // isn't plugged in. Attaching the player anyway gave a play button that did
+    // nothing at all when pressed.
+    const present = await fileExists(entry.source_path).catch(() => false);
+    if (get().activeEntryId !== entry.id) return; // moved on already
+    if (!present) {
+      set({ sourceMissing: true });
+      return;
+    }
     set({
       media: {
         path: entry.source_path,
@@ -459,10 +504,6 @@ export const useStore = create<AppStore>((set, get) => ({
           kind_label: "",
         },
       },
-      range: entry.range,
-      transcript: entry.transcript,
-      activeEntryId: entry.id,
-      route: "transcript",
     });
   },
 

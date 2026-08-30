@@ -103,3 +103,26 @@ test("history records a finished transcript", async ({ page }) => {
     page.getByRole("button", { name: /lecture\.mp3/ }).first(),
   ).toBeVisible();
 });
+
+test("a history entry whose recording has moved opens without a dead player", async ({
+  page,
+}) => {
+  // "missing" makes the mock report the source file as gone, standing in for a
+  // recording that was moved, renamed, or lives on a drive that isn't attached.
+  await page.goto("/?file=/demo/missing-recording.mp3");
+  await page.getByRole("button", { name: /choose an audio or video file/i }).click();
+  await page.getByRole("button", { name: /start transcription/i }).click();
+  await expect(page.getByRole("button", { name: /new transcription/i })).toBeVisible({
+    timeout: 30_000,
+  });
+
+  await page.getByRole("button", { name: "History" }).click();
+  await page.locator("li button").first().click();
+
+  // The transcript is still fully available…
+  await expect(page.getByRole("button", { name: /export/i })).toBeVisible();
+  await expect(page.locator('[data-row="0"]')).toBeVisible();
+  // …and instead of a play button that does nothing, it says why.
+  await expect(page.getByText(/original recording isn't where it was/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Play", exact: true })).toHaveCount(0);
+});

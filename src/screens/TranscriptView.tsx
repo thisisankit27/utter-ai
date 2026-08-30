@@ -30,16 +30,21 @@ const FORMATS: { id: string; label: string }[] = [
 export function TranscriptView() {
   const stored = useStore((s) => s.transcript);
   const media = useStore((s) => s.media);
+  const sourceMissing = useStore((s) => s.sourceMissing);
   if (!stored) return null;
-  return <TranscriptInner stored={stored} media={media} />;
+  return (
+    <TranscriptInner stored={stored} media={media} sourceMissing={sourceMissing} />
+  );
 }
 
 function TranscriptInner({
   stored,
   media,
+  sourceMissing,
 }: {
   stored: Transcript;
   media: Media | null;
+  sourceMissing: boolean;
 }) {
   const reset = useStore((s) => s.reset);
   const toast = useStore((s) => s.toast);
@@ -153,6 +158,15 @@ function TranscriptInner({
           </Menu>
         </div>
       </div>
+
+      {sourceMissing && (
+        <p className="mt-4 flex items-start gap-2 rounded-2xl border border-border bg-surface px-4 py-3 text-xs text-muted">
+          <IconAlert className="mt-px h-3.5 w-3.5 shrink-0 text-amber" />
+          The original recording isn&apos;t where it was when this was
+          transcribed, so there&apos;s nothing to play. The transcript below is
+          complete and can still be edited and exported.
+        </p>
+      )}
 
       {canPlay && (
         <div className="mt-4 rounded-2xl border border-border bg-surface p-3">
