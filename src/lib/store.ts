@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { api, asUserError, onJobUpdate } from "./ipc";
-import { checkForUpdate, relaunchApp, type UpdateSession } from "./updates";
+import {
+  checkForUpdate,
+  installStyle,
+  relaunchApp,
+  type InstallStyle,
+  type UpdateSession,
+} from "./updates";
+import { confirmAction } from "@/components/ConfirmDialog";
 import type {
   HistoryEntry,
   JobStage,
@@ -56,6 +63,8 @@ interface UpdateState {
   progress: number;
   /** Set once the user dismisses the banner for this session. */
   dismissed: boolean;
+  /** What happens when the download finishes on this platform. */
+  style: InstallStyle;
 }
 
 interface AppStore {
@@ -119,6 +128,16 @@ let toastSeq = 0;
 /** The live updater handle between "available" and "ready". */
 let pendingUpdate: UpdateSession | null = null;
 
+/** Windows hands off to the installer and terminates this process from inside
+ *  the download call, so the window vanishes mid-click. Say so first. */
+function confirmInstall(version: string | undefined): Promise<boolean> {
+  return confirmAction(
+    `Install UtterAI ${version ?? "update"} now?`,
+    "UtterAI will close and the installer will take over, then reopen when it's done.",
+    { confirmLabel: "Close and install", danger: false },
+  );
+}
+
 /** Small unique id — avoids `crypto.randomUUID`, which is undefined in some
  *  webviews where the app origin isn't treated as a secure context. */
 function newLocalId(): string {
@@ -145,7 +164,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
   error: null,
   toasts: [],
-  update: { status: "idle", info: null, progress: 0, dismissed: false },
+  update: { status: "idle", info: null, progress: 0, dismissed: false, style: "restart" },
 
   init: async () => {
     try {
@@ -185,7 +204,7 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!session) {
         pendingUpdate = null;
         set({
-          update: { status: "uptodate", info: null, progress: 0, dismissed: false },
+          update: { ...get().update, status: "uptodate", info: null, progress: 0, dismissed: false },
         });
         if (manual) get().toast("UtterAI is up to date", "success");
         return;
@@ -197,6 +216,7 @@ export const useStore = create<AppStore>((set, get) => ({
           info: session.info,
           progress: 0,
           dismissed: false,
+          style: await installStyle(),
         },
       });
     } catch (e) {
@@ -208,6 +228,24 @@ export const useStore = create<AppStore>((set, get) => ({
 
   installUpdate: async () => {
     if (!pendingUpdate) return;
+
+    // Installing kills whatever is running: on Windows the installer terminates
+    // this process outright, and everywhere else the app has to restart. Either
+    // way a transcription in flight is lost, with nothing saved.
+    if (get().job) {
+      get().toast(
+        "Finish or cancel the transcription first — updating closes UtterAI",
+        "error",
+      );
+      return;
+    }
+
+    const style = get().update.style;
+    if (style === "handoff") {
+      const ok = await confirmInstall(get().update.info?.version);
+      if (!ok) return;
+    }
+
     // The user opted in — let the progress and the restart prompt show in the
     // banner even if they'd dismissed the initial "available" notice.
     set({
@@ -222,6 +260,8 @@ export const useStore = create<AppStore>((set, get) => ({
       await pendingUpdate.downloadAndInstall((fraction) => {
         set({ update: { ...get().update, progress: fraction } });
       });
+      // Reached on the "restart" platforms only; on Windows the installer has
+      // already replaced this process by now.
       set({ update: { ...get().update, status: "ready", progress: 1 } });
     } catch (e) {
       set({ update: { ...get().update, status: "error" } });

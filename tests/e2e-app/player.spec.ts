@@ -118,7 +118,7 @@ test("switching files resets the player and the range mode", async ({ page }) =>
 test("seeking from the transcript moves the playhead", async ({ page }) => {
   await openReview(page);
   await page.getByRole("button", { name: /start transcription/i }).click();
-  await expect(page.getByRole("heading", { name: "interview.mp3" })).toBeVisible({
+  await expect(page.getByRole("button", { name: /new transcription/i })).toBeVisible({
     timeout: 30_000,
   });
 

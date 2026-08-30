@@ -26,6 +26,33 @@ export interface UpdateSession {
   downloadAndInstall(onProgress: (fraction: number) => void): Promise<void>;
 }
 
+/**
+ * How the platform's installer behaves once the download finishes — the two
+ * are genuinely different, and the UI has to say the right thing.
+ *
+ *  - "restart": the update is staged in place and takes effect on next launch
+ *    (Linux AppImage, and .deb once dpkg has run). We show "Restart now".
+ *  - "handoff": the installer takes over and the app is terminated from inside
+ *    `downloadAndInstall`, which therefore never returns (Windows NSIS/MSI —
+ *    the plugin ends with `std::process::exit(0)`). We have to warn first,
+ *    because from the user's side the window simply disappears.
+ */
+export type InstallStyle = "restart" | "handoff";
+
+export async function installStyle(): Promise<InstallStyle> {
+  if (MOCK) {
+    return new URLSearchParams(location.search).get("handoff") === "1"
+      ? "handoff"
+      : "restart";
+  }
+  try {
+    const { platform } = await import("@tauri-apps/plugin-os");
+    return platform() === "windows" ? "handoff" : "restart";
+  } catch {
+    return "restart";
+  }
+}
+
 export async function checkForUpdate(): Promise<UpdateSession | null> {
   if (MOCK) {
     if (!mockUpdateWanted()) return null;

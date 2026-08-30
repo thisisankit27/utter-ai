@@ -44,7 +44,10 @@ async function toTranscript(page: Page) {
   await page.goto("/?file=/demo/interview.mp3");
   await page.getByRole("button", { name: /choose an audio or video file/i }).click();
   await page.getByRole("button", { name: /start transcription/i }).click();
-  await expect(page.getByRole("heading", { name: "interview.mp3" })).toBeVisible({
+  // Wait for a control unique to the transcript screen. The filename heading is
+  // not one: Review shows it too, and it lingers through the exit animation, so
+  // waiting on it can resolve while the app is still two screens back.
+  await expect(page.getByRole("button", { name: /new transcription/i })).toBeVisible({
     timeout: 30_000,
   });
 }

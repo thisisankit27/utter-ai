@@ -9,10 +9,11 @@ const RELEASES_URL = "https://github.com/thisisankit27/utter-ai/releases/latest"
  * always dismissable — automatic checks can be turned off entirely in Settings.
  */
 export function UpdateBanner() {
-  const { status, info, progress, dismissed } = useStore((s) => s.update);
+  const { status, info, progress, dismissed, style } = useStore((s) => s.update);
   const install = useStore((s) => s.installUpdate);
   const relaunch = useStore((s) => s.relaunchForUpdate);
   const dismiss = useStore((s) => s.dismissUpdate);
+  const busy = useStore((s) => !!s.job);
 
   const visible =
     !dismissed && (status === "available" || status === "downloading" || status === "ready");
@@ -35,8 +36,16 @@ export function UpdateBanner() {
             What's new
           </button>
           <button
-            className="shrink-0 rounded-md bg-iris px-2.5 py-1 font-medium text-white"
+            className="shrink-0 rounded-md bg-iris px-2.5 py-1 font-medium text-white disabled:cursor-not-allowed disabled:opacity-45"
             onClick={install}
+            disabled={busy}
+            title={
+              busy
+                ? "Finish or cancel the transcription first"
+                : style === "handoff"
+                  ? "UtterAI will close while the installer runs"
+                  : undefined
+            }
           >
             Update now
           </button>
@@ -47,6 +56,7 @@ export function UpdateBanner() {
         <>
           <span className="min-w-0 flex-1 text-iris">
             Downloading update… {Math.round(progress * 100)}%
+            {style === "handoff" && progress > 0.98 && " — UtterAI will close in a moment"}
           </span>
           <div className="h-1.5 w-28 shrink-0 overflow-hidden rounded-full bg-surface-2">
             <div
