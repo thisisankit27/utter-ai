@@ -5,10 +5,10 @@
 //! stays fast and offline for contributors.
 
 use std::path::PathBuf;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use utterai_core::transcribe::{transcribe, TranscribeEvent, TranscribeRequest};
+use utterai_core::transcribe::{transcribe, Stage, TranscribeEvent, TranscribeRequest};
 
 fn tool(name: &str) -> PathBuf {
     // an explicit sidecar (set by the app build) wins
@@ -104,6 +104,63 @@ fn transcribes_jfk_sample() {
     let stages = events.lock().unwrap().clone();
     assert!(stages.iter().any(|s| s.contains("Extracting")));
     assert!(stages.iter().any(|s| s.contains("Transcribing")));
+}
+
+/// The abort callback must report a real bool. A mistyped trampoline (see the
+/// note in `transcribe.rs`) made whisper read garbage and randomly abort the
+/// encode, surfacing as "whisper error -6". This asserts a clean run and that a
+/// mid-run cancel is reported as a cancellation — not as a transcription error.
+#[test]
+fn abort_callback_does_not_spuriously_fail_or_mislabel() {
+    let Ok(model) = std::env::var("UTTERAI_TEST_MODEL") else {
+        return;
+    };
+    let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/jfk.wav")
+        .canonicalize()
+        .expect("fixture present");
+    let req = || TranscribeRequest {
+        input: fixture.clone(),
+        range: None,
+        model_path: PathBuf::from(&model),
+        model_id: "tiny".into(),
+        language: None,
+        translate: false,
+        threads: 2,
+    };
+
+    // 1. A normal run completes — no spurious -6.
+    transcribe(
+        &req(),
+        &tool("ffmpeg"),
+        &tool("ffprobe"),
+        Arc::new(AtomicBool::new(false)),
+        Arc::new(|_| {}),
+    )
+    .expect("uncancelled transcription must succeed");
+
+    // 2. Cancelling once whisper starts yields `cancelled`, not a raw error.
+    let cancel = Arc::new(AtomicBool::new(false));
+    let c2 = cancel.clone();
+    let sink: utterai_core::transcribe::EventSink = Arc::new(move |e: TranscribeEvent| {
+        if matches!(
+            e,
+            TranscribeEvent::Stage {
+                stage: Stage::Transcribing,
+                ..
+            }
+        ) {
+            c2.store(true, Ordering::Relaxed);
+        }
+    });
+    let err = transcribe(&req(), &tool("ffmpeg"), &tool("ffprobe"), cancel, sink)
+        .expect_err("a cancelled run must return an error");
+    assert_eq!(
+        err.to_user().code,
+        "cancelled",
+        "cancel should surface as 'cancelled', got {:?}",
+        err.to_user()
+    );
 }
 
 #[test]
