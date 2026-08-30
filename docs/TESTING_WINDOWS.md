@@ -143,6 +143,43 @@ rendered transcript, the timestamped view and the export menu.
 
 ---
 
+## What changed in 1.2.0 — verify these first
+
+These are the fixes that had no Windows coverage before release, so they are the
+highest-value things to confirm on a real machine.
+
+- [ ] **The play button tells the truth.** On the Review screen press play on an
+      MP3, then an M4A and an MP4. Either audio starts *and* the button becomes
+      Pause, or it stays Play and a line appears saying the file can't be
+      previewed. What must never happen: a Pause icon over silence. (Before
+      1.2.0 the button flipped unconditionally, which is why playback looked
+      random.)
+- [ ] **Disabled controls look disabled.** Settings → pick a model you haven't
+      downloaded as the default, go back to Review: "Start transcription" is
+      greyed out and says why. Every disabled button used to render identically
+      to an enabled one.
+- [ ] **Highlights are visible.** During playback the current transcript line has
+      a tinted background and a left bar; typing in the search box tints matching
+      rows and marks the words. Both were invisible before 1.2.0.
+- [ ] **Destructive actions ask first.** Deleting a history entry, "Clear all",
+      and removing a model each show a confirmation.
+- [ ] **Theme follows the OS.** With Settings → Theme on "System", switch Windows
+      between light and dark: the app repaints *and* the sun/moon icon in the
+      header changes with it.
+- [ ] **Keyboard.** Tab to the range ribbon and use arrow keys (Shift for bigger
+      steps, `[` / `]` to switch handle); arrow keys move between segmented
+      options; on first run, Tab stays inside the onboarding dialog.
+- [ ] **Updating is announced.** With a newer release available, "Update now"
+      asks before closing the app, and is refused outright while a transcription
+      is running.
+
+> **Expect the old update behaviour when updating *to* 1.2.0.** The improved
+> flow ships *in* this version, so an update from 1.1.1 runs 1.1.1's updater and
+> the window will still close abruptly on Windows. That is not a regression —
+> it is only fixed from 1.2.0 onward.
+
+---
+
 ## Runtime checklist
 
 Do this on a freshly installed copy.
@@ -160,14 +197,18 @@ Do this on a freshly installed copy.
       preview; the window never freezes. Cancel mid-run leaves nothing behind
       (check `%LOCALAPPDATA%\UtterAI\` — no leftover `.wav` in the temp area).
 - [ ] **Transcript** — Readable and Timestamped tabs both populate; clicking a
-      line seeks the player; search highlights matches; an edit sticks.
+      line seeks the player; search highlights matches; an edit sticks
+      (double-click anywhere on a line, or focus it and press F2).
 - [ ] **Export** — write an `.srt` and a `.txt`; open them and confirm the
       timing and text.
 - [ ] **Formats** — repeat a short transcription for `.wav`, `.m4a`, `.flac`,
       `.mp4`, `.mkv`.
 - [ ] **Models** — Settings → download the Small model (progress + resume by
-      killing the app mid-download and reopening); set it as default; transcribe
-      with it; remove it.
+      killing the app mid-download and reopening); cancel a download and confirm
+      it reports "Download cancelled" rather than an error dialog; set it as
+      default; transcribe with it; remove it while it is the default and check
+      the next transcription still works (it should fall back to the built-in
+      model, not fail with "model unavailable").
 - [ ] **Offline** — disconnect the network, restart, transcribe with the
       built-in model. Works.
 - [ ] **Updates** — Settings → Updates → "Check now". With one release published
