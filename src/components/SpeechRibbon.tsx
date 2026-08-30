@@ -45,6 +45,8 @@ export function SpeechRibbon({
   const [width, setWidth] = useState(0);
   const [drag, setDrag] = useState<null | "start" | "end" | "seek">(null);
   const [hoverX, setHoverX] = useState<number | null>(null);
+  /** Which range handle the arrow keys move: 0 = start, 1 = end. */
+  const [keyHandle, setKeyHandle] = useState<0 | 1>(0);
 
   const bars = useMemo(() => {
     const n = Math.max(24, Math.floor(width / 6));
@@ -223,23 +225,54 @@ export function SpeechRibbon({
     }
   };
 
+  /**
+   * The ribbon claimed `role="slider"` but had no tabindex and no key handling,
+   * so choosing a range or scrubbing was mouse-only. Arrows nudge by a second,
+   * Shift+arrow by ten, Home/End jump to the ends. In "select" mode Tab-less
+   * users need a way to reach both handles, so `[` and `]` pick which one the
+   * arrows move.
+   */
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (mode === "progress") return;
+    const step = e.shiftKey ? 10 : 1;
+    const at = mode === "play" ? currentTime : range?.[keyHandle] ?? 0;
+    let next: number | null = null;
+
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") next = at + step;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") next = at - step;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = duration;
+    else if (mode === "select" && (e.key === "[" || e.key === "]")) {
+      e.preventDefault();
+      setKeyHandle(e.key === "[" ? 0 : 1);
+      return;
+    } else return;
+
+    e.preventDefault();
+    const clamped = Math.min(duration, Math.max(0, next));
+    if (mode === "play") onSeek?.(clamped);
+    else applyRange(keyHandle === 0 ? "start" : "end", clamped);
+  };
+
   return (
     <div className="select-none">
       <div
         ref={wrapRef}
-        className="relative w-full cursor-pointer touch-none rounded-xl bg-surface-2/60 px-0"
+        className="relative w-full cursor-pointer touch-none rounded-xl bg-surface-2/60 px-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iris"
         style={{ height }}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerLeave={() => setHoverX(null)}
+        onKeyDown={onKeyDown}
+        tabIndex={mode === "progress" ? -1 : 0}
         role={mode === "progress" ? "progressbar" : "slider"}
         aria-label={
           mode === "select"
-            ? "Transcription range"
+            ? `Transcription range — arrow keys move the ${keyHandle === 0 ? "start" : "end"}, [ and ] switch handle`
             : mode === "progress"
               ? "Transcription progress"
-              : "Playback position"
+              : "Playback position — arrow keys scrub"
         }
         aria-valuemin={0}
         aria-valuemax={Math.round(duration)}

@@ -36,7 +36,7 @@ export function UpdateBanner() {
             What's new
           </button>
           <button
-            className="shrink-0 rounded-md bg-iris px-2.5 py-1 font-medium text-white disabled:cursor-not-allowed disabled:opacity-45"
+            className="shrink-0 rounded-md bg-iris-strong px-2.5 py-1 font-medium text-white disabled:cursor-not-allowed disabled:opacity-45"
             onClick={install}
             disabled={busy}
             title={
@@ -73,7 +73,7 @@ export function UpdateBanner() {
             Update ready. Restart UtterAI to finish.
           </span>
           <button
-            className="shrink-0 rounded-md bg-iris px-2.5 py-1 font-medium text-white"
+            className="shrink-0 rounded-md bg-iris-strong px-2.5 py-1 font-medium text-white"
             onClick={relaunch}
           >
             Restart now

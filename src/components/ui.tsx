@@ -58,9 +58,15 @@ export function Dialog({
     };
     document.addEventListener("keydown", onKey);
     const t = setTimeout(() => {
-      const el = panelRef.current?.querySelector<HTMLElement>(
-        "[data-autofocus], button, [href], input, select, textarea",
-      );
+      // `querySelector("[data-autofocus], button, …")` returns whichever comes
+      // first in the document, not the marked element — so the error dialog was
+      // landing on "Show technical details" instead of its primary action.
+      const panel = panelRef.current;
+      const el =
+        panel?.querySelector<HTMLElement>("[data-autofocus]") ??
+        panel?.querySelector<HTMLElement>(
+          "button, [href], input, select, textarea",
+        );
       el?.focus();
     }, 30);
     return () => {
@@ -131,18 +137,39 @@ export function Segmented<T extends string>({
   size?: "sm" | "md";
 }) {
   const groupId = useId();
+  // A radiogroup is one tab stop, and the arrow keys move between the options.
+  // Every button used to be its own tab stop with no arrow handling, which is
+  // both noisier and not what a screen-reader user is told to expect.
+  const groupRef = useRef<HTMLDivElement>(null);
+  const move = (from: number, delta: number) => {
+    const next = (from + delta + options.length) % options.length;
+    onChange(options[next].value);
+    // Roving tabindex: the selection and the focus have to travel together.
+    groupRef.current?.querySelectorAll("button")[next]?.focus();
+  };
   return (
     <div
+      ref={groupRef}
       role="radiogroup"
       className="inline-flex rounded-xl border border-border bg-surface-2 p-1"
     >
-      {options.map((o) => {
+      {options.map((o, idx) => {
         const active = o.value === value;
         return (
           <button
             key={o.value}
             role="radio"
             aria-checked={active}
+            tabIndex={active ? 0 : -1}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+                e.preventDefault();
+                move(idx, 1);
+              } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+                e.preventDefault();
+                move(idx, -1);
+              }
+            }}
             onClick={() => onChange(o.value)}
             className={clsx(
               "relative inline-flex items-center gap-1.5 rounded-lg font-medium transition-colors",

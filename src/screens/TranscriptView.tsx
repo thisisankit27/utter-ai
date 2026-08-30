@@ -161,7 +161,7 @@ function TranscriptInner({
               onClick={playPause}
               disabled={!!playError}
               title={playError ? playError.message : undefined}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-iris text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-iris-strong text-white disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={playing ? "Pause" : "Play"}
             >
               {playing ? <IconPause className="h-4 w-4" /> : <IconPlay className="h-4 w-4" />}
@@ -345,7 +345,9 @@ function Row({
             : "hover:bg-surface-2/60"
       }`}
     >
-      <span className="pointer-events-none absolute -left-12 top-2 font-mono text-[11px] text-faint tnum opacity-60 transition group-hover:opacity-100">
+      {/* Quiet by colour, not by opacity: `opacity-60` on top of --faint put
+          these timestamps back under the 4.5:1 contrast floor. */}
+      <span className="pointer-events-none absolute -left-12 top-2 font-mono text-[11px] text-faint tnum transition-colors group-hover:text-muted">
         {clock(row.start - offset)}
       </span>
       <EditableText

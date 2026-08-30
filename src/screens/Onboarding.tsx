@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "@/lib/store";
 import { Switch } from "@/components/ui";
@@ -32,12 +32,54 @@ export function Onboarding() {
   const update = useStore((s) => s.updateSettings);
   const settings = useStore((s) => s.settings);
   const [i, setI] = useState(0);
+  const panelRef = useRef<HTMLDivElement>(null);
   const last = i === SLIDES.length - 1;
   const S = SLIDES[i];
 
+  // This is the first thing a new user meets, and it was a bare div: screen
+  // readers weren't told it was a dialog, Tab wandered into the app behind it,
+  // and nothing had focus to begin with.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const panel = panelRef.current;
+      // The marked element, not merely the first button in the markup.
+      (
+        panel?.querySelector<HTMLElement>("[data-autofocus]") ??
+        panel?.querySelector<HTMLElement>("button")
+      )?.focus();
+    }, 40);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const items = panelRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!items?.length) return;
+      const first = items[0];
+      const lastEl = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && document.activeElement === lastEl) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-6 backdrop-blur-sm">
-      <div className="card w-full max-w-md overflow-hidden p-8 text-center shadow-lift">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-title"
+        className="card w-full max-w-md overflow-hidden p-8 text-center shadow-lift"
+      >
         <div className="flex justify-center gap-1.5">
           {SLIDES.map((_, idx) => (
             <span
@@ -61,7 +103,9 @@ export function Onboarding() {
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-iris/10 text-iris">
               <S.icon className="h-7 w-7" />
             </span>
-            <h1 className="mt-5 text-xl">{S.title}</h1>
+            <h1 id="onboarding-title" className="mt-5 text-xl">
+              {S.title}
+            </h1>
             <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-muted">
               {S.body}
             </p>
@@ -87,6 +131,7 @@ export function Onboarding() {
           </button>
           <button
             className="btn-primary"
+            data-autofocus
             onClick={() =>
               last ? update({ onboarding_complete: true }) : setI(i + 1)
             }

@@ -18,9 +18,16 @@
   --surface-2: 244 245 248;
   --border: 224 226 232;
   --text: 22 23 27; /* #16171B */
-  --muted: 108 111 122;
-  --faint: 150 153 163;
+  /* Both clear WCAG AA (4.5:1) against --bg and --surface. `faint` was
+     150/153/163 — 2.7:1 — and it carries real information: timestamps, file
+     sizes, disk space, form hints. axe flagged it on every screen. */
+  --muted: 91 94 104; /* 6.1:1 on bg */
+  --faint: 110 113 123; /* 4.6:1 on bg */
   --iris: 91 84 232; /* #5B54E8 */
+  /* Fill for solid buttons. White text on --iris is 5.4:1 here, but the dark
+     theme lifts --iris for legibility *on* dark, which drops white text on it
+     to 3.4:1. Keeping the fill separate lets each theme satisfy both jobs. */
+  --iris-strong: 91 84 232;
   --iris-soft: 143 138 242;
   --teal: 20 168 150; /* success / live */
   --amber: 214 154 58;
@@ -35,9 +42,10 @@
   --surface-2: 28 29 34; /* #1C1D22 */
   --border: 42 44 52;
   --text: 233 234 238; /* #E9EAEE */
-  --muted: 145 148 159;
-  --faint: 99 102 112;
+  --muted: 146 149 159; /* 6.1:1 on surface */
+  --faint: 125 128 138; /* 4.6:1 on surface */
   --iris: 129 122 250; /* lifted for contrast on dark */
+  --iris-strong: 107 101 207; /* white text 4.8:1 */
   --iris-soft: 92 85 200;
   --teal: 45 190 170;
   --amber: 224 168 74;
@@ -112,7 +120,7 @@ body {
       focus-visible:ring-2 focus-visible:ring-iris/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
   }
   .btn-primary {
-    @apply btn bg-iris text-white shadow-soft hover:brightness-110 active:brightness-95;
+    @apply btn bg-iris-strong text-white shadow-soft hover:brightness-110 active:brightness-95;
   }
   .btn-ghost {
     @apply btn text-muted hover:bg-surface-2 hover:text-text;

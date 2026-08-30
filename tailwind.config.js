@@ -27,6 +27,7 @@ export default {
         muted: "rgb(var(--muted) / <alpha-value>)",
         faint: "rgb(var(--faint) / <alpha-value>)",
         iris: "rgb(var(--iris) / <alpha-value>)",
+        "iris-strong": "rgb(var(--iris-strong) / <alpha-value>)",
         "iris-soft": "rgb(var(--iris-soft) / <alpha-value>)",
         teal: "rgb(var(--teal) / <alpha-value>)",
         amber: "rgb(var(--amber) / <alpha-value>)",
