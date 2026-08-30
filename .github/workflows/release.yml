@@ -109,6 +109,10 @@ jobs:
   combine-checksums:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # for the workflow dispatch below
+      actions: write
     steps:
       - name: Merge per-platform checksum files into checksums.txt
         env:
@@ -119,3 +123,14 @@ jobs:
           cat cs/*.txt | sort -k2 > checksums.txt
           cat checksums.txt
           gh release upload "${{ env.TAG }}" checksums.txt -R "${{ github.repository }}" --clobber
+
+      # The download page reads its SHA-256s out of that file. The
+      # `release: published` event fires when tauri-action publishes, which is
+      # *before* this job has merged and uploaded checksums.txt — so the refresh
+      # that event triggers finds nothing and leaves the site showing the
+      # previous release's hashes until the next 6-hourly run. Kick it off now
+      # that the file actually exists.
+      - name: Refresh the site's download data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run downloads.yml -R "${{ github.repository }}" --ref master
