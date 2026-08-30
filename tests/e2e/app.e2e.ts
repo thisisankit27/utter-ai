@@ -29,11 +29,19 @@ describe("UtterAI packaged app", () => {
   it("transcribes the file and renders the transcript", async () => {
     await (await $("button*=Start transcription")).click();
 
-    // The transcript text itself is the product outcome — wait for it directly
-    // rather than a fragile tab selector.
+    // Wait for the transcript *screen*, not just the JFK text — that text also
+    // streams into the live preview on the Working screen, and polling on it
+    // alone can catch the Working→Transcript transition with an empty <main>.
+    // "New transcription" only exists on the transcript screen.
     await browser.waitUntil(
-      async () => /what your country can do for you/i.test(await body()),
-      { timeout: 240000, timeoutMsg: "transcript never rendered" },
+      async () => {
+        const b = await body();
+        return (
+          b.includes("New transcription") &&
+          /what your country can do for you/i.test(b)
+        );
+      },
+      { timeout: 240000, timeoutMsg: "transcript screen never rendered" },
     );
 
     const text = (await body()).toLowerCase();
