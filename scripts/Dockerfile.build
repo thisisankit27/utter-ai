@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libsoup-3.0-dev librsvg2-dev \
       libayatana-appindicator3-dev \
       libasound2-dev \
-      patchelf desktop-file-utils fakeroot \
+      patchelf desktop-file-utils fakeroot xdg-utils \
       xvfb webkit2gtk-driver \
       ffmpeg espeak-ng \
     && rm -rf /var/lib/apt/lists/*
