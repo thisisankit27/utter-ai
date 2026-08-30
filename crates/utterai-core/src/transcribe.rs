@@ -226,18 +226,30 @@ pub fn transcribe(
             }
         });
     }
-    {
-        let cancel = cancel.clone();
-        params.set_abort_callback_safe(move || cancel.load(Ordering::Relaxed));
+    // Abort callback. We deliberately do NOT use whisper-rs 0.16's
+    // `set_abort_callback_safe`: it installs `trampoline::<F>` but stores a
+    // `Box<Box<dyn FnMut() -> bool>>`, so whisper.cpp calls through a mistyped
+    // pointer and reads a garbage bool. On some machines that byte is non-zero,
+    // the encode is aborted, and it surfaces as the opaque "whisper error -6".
+    // Wire it by hand with a correctly-typed trampoline over the AtomicBool.
+    unsafe extern "C" fn abort_if_cancelled(user_data: *mut std::ffi::c_void) -> bool {
+        // SAFETY: `user_data` is the `AtomicBool` owned by `cancel`, which the
+        // caller keeps alive for the whole `full()` call below.
+        unsafe { (*(user_data as *const AtomicBool)).load(Ordering::Relaxed) }
+    }
+    unsafe {
+        params.set_abort_callback(Some(abort_if_cancelled));
+        params.set_abort_callback_user_data(Arc::as_ptr(&cancel) as *mut std::ffi::c_void);
     }
 
     let started = Instant::now();
-    state
-        .full(params, &samples)
-        .map_err(|e| CoreError::Transcription(e.to_string()))?;
+    let outcome = state.full(params, &samples);
+    // A cancelled run makes `full()` return an error (the aborted encode); report
+    // it as a cancellation, not as a transcription failure.
     if cancel.load(Ordering::Relaxed) {
         return Err(CoreError::Cancelled);
     }
+    outcome.map_err(|e| CoreError::Transcription(e.to_string()))?;
     tracing::info!(
         elapsed_ms = started.elapsed().as_millis(),
         "whisper full() done"
