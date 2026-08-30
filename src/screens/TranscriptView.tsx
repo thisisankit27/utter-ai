@@ -4,9 +4,12 @@ import { useStore, type Media } from "@/lib/store";
 import { api } from "@/lib/ipc";
 import { clock, clockMs, languageName } from "@/lib/format";
 import type { Segment, Transcript } from "@/lib/types";
+import { useMediaPlayer } from "@/lib/useMediaPlayer";
+import { MediaElement } from "@/components/MediaElement";
 import { SpeechRibbon } from "@/components/SpeechRibbon";
 import { Menu, MenuItem, Segmented } from "@/components/ui";
 import {
+  IconAlert,
   IconCopy,
   IconDownload,
   IconPause,
@@ -46,16 +49,18 @@ function TranscriptInner({
   const [transcript, setTranscript] = useState<Transcript>(stored);
   const [view, setView] = useState<"readable" | "timestamped">("readable");
   const [query, setQuery] = useState("");
-  const [playing, setPlaying] = useState(false);
-  const [t, setT] = useState(0);
-  const mediaRef = useRef<HTMLVideoElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setTranscript(stored), [stored]);
 
-  const src = media ? mediaSrc(media.path) : "";
+  const src = useMemo(
+    () => (media ? mediaSrc(media.path) || null : null),
+    [media],
+  );
+  const player = useMediaPlayer(src);
+  const { playing, currentTime: t, error: playError, toggle: playPause, seek } = player;
   const offset = transcript.source_offset;
-  const canPlay = !!media?.path;
+  const canPlay = !!src;
 
   const rows = view === "readable" ? transcript.paragraphs : transcript.segments;
 
@@ -79,22 +84,6 @@ function TranscriptInner({
     );
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [activeIdx]);
-
-  function seek(secs: number) {
-    if (mediaRef.current) mediaRef.current.currentTime = secs;
-    setT(secs);
-  }
-  function playPause() {
-    const el = mediaRef.current;
-    if (!el) return;
-    if (el.paused) {
-      el.play();
-      setPlaying(true);
-    } else {
-      el.pause();
-      setPlaying(false);
-    }
-  }
 
   function editRow(i: number, text: string) {
     setTranscript((prev) => {
@@ -170,7 +159,9 @@ function TranscriptInner({
           <div className="flex items-center gap-3">
             <button
               onClick={playPause}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-iris text-white"
+              disabled={!!playError}
+              title={playError ? playError.message : undefined}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-iris text-white disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={playing ? "Pause" : "Play"}
             >
               {playing ? <IconPause className="h-4 w-4" /> : <IconPlay className="h-4 w-4" />}
@@ -193,6 +184,14 @@ function TranscriptInner({
               {clock(Math.max(0, t - offset))} / {clock(transcript.duration)}
             </span>
           </div>
+          {playError && (
+            <p className="mt-2 flex items-start gap-2 px-1 text-xs text-muted">
+              <IconAlert className="mt-px h-3.5 w-3.5 shrink-0 text-amber" />
+              {playError.kind === "unsupported"
+                ? "The original file can't be played here — the transcript below is unaffected."
+                : playError.message}
+            </p>
+          )}
         </div>
       )}
 
@@ -252,13 +251,7 @@ function TranscriptInner({
         </button>
       </div>
 
-      <video
-        ref={mediaRef}
-        src={src}
-        className="hidden"
-        onTimeUpdate={(e) => setT(e.currentTarget.currentTime)}
-        onEnded={() => setPlaying(false)}
-      />
+      <MediaElement src={src} elRef={player.ref} />
     </div>
   );
 }
@@ -288,16 +281,39 @@ function Row({
 }) {
   const [editing, setEditing] = useState(false);
 
+  // Double-click lives on the row, not on the text span. On the span it only
+  // fired when the pointer landed exactly on a glyph, so aiming at the line
+  // and double-clicking usually did nothing at all.
+  const rowProps = {
+    "data-row": index,
+    onDoubleClick: () => setEditing(true),
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (editing) return;
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onSeek();
+      } else if (e.key === "F2") {
+        e.preventDefault();
+        setEditing(true);
+      }
+    },
+    tabIndex: editing ? -1 : 0,
+    role: "button" as const,
+    "aria-label": `${row.text.slice(0, 80)} — play from ${clock(row.start - offset)}, F2 to edit`,
+  };
+
   if (view === "timestamped") {
     return (
       <div
-        data-row={index}
-        className={`flex gap-3 px-4 py-2.5 transition-colors ${
+        {...rowProps}
+        className={`flex gap-3 px-4 py-2.5 transition-colors focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-iris ${
           active ? "bg-iris/8" : matched ? "bg-amber/8" : ""
         }`}
       >
         <button
           onClick={onSeek}
+          tabIndex={-1}
+          aria-hidden
           className="shrink-0 pt-0.5 font-mono text-xs text-iris tnum hover:underline"
         >
           {clockMs(row.start - offset)}
@@ -317,11 +333,11 @@ function Row({
 
   return (
     <div
-      data-row={index}
+      {...rowProps}
       onClick={(e) => {
         if (!editing && (e.target as HTMLElement).tagName !== "MARK") onSeek();
       }}
-      className={`group relative cursor-pointer rounded-lg py-1.5 pl-4 pr-2 text-[15px] leading-[1.75] transition-colors ${
+      className={`group relative cursor-pointer rounded-lg py-1.5 pl-4 pr-2 text-[15px] leading-[1.75] transition-colors focus-visible:outline focus-visible:-outline-offset-2 focus-visible:outline-iris ${
         active
           ? "bg-iris/8 before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-full before:bg-iris"
           : matched

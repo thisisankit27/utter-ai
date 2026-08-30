@@ -37,9 +37,43 @@ export async function saveFileDialog(
 }
 
 export function mediaSrc(path: string): string {
-  // In mock mode there's no real file; return empty so the player stays inert.
-  if (MOCK) return "";
+  // Mock mode has no real file. Returning "" used to leave the player inert,
+  // which meant playback — the part that broke most often — was the one thing
+  // the browser test suite could never exercise. Hand back a short synthesised
+  // tone instead so play/pause/seek run against a genuine media element.
+  if (MOCK) return /nomedia/i.test(path) ? "" : mockToneUrl();
   return convertFileSrc(path);
+}
+
+let toneUrl: string | null = null;
+/** A 10-second 16 kHz mono WAV, built once, as a blob URL. */
+function mockToneUrl(): string {
+  if (toneUrl) return toneUrl;
+  const rate = 16_000;
+  const samples = rate * 10;
+  const buf = new ArrayBuffer(44 + samples * 2);
+  const view = new DataView(buf);
+  const ascii = (off: number, s: string) => {
+    for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i));
+  };
+  ascii(0, "RIFF");
+  view.setUint32(4, 36 + samples * 2, true);
+  ascii(8, "WAVEfmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, rate, true);
+  view.setUint32(28, rate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  ascii(36, "data");
+  view.setUint32(40, samples * 2, true);
+  for (let i = 0; i < samples; i++) {
+    const env = 0.25 * Math.sin((i / samples) * Math.PI * 8) ** 2;
+    view.setInt16(44 + i * 2, Math.round(env * Math.sin((i / rate) * 2 * Math.PI * 220) * 32767), true);
+  }
+  toneUrl = URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
+  return toneUrl;
 }
 
 export async function revealPath(path: string): Promise<void> {
