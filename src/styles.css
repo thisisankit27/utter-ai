@@ -121,7 +121,7 @@ body {
     @apply btn border border-border bg-surface text-text hover:bg-surface-2;
   }
   .btn-danger {
-    @apply btn bg-rose/10 text-rose hover:bg-rose/16;
+    @apply btn bg-rose/10 text-rose hover:bg-rose/20;
   }
 
   .card {

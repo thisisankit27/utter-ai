@@ -4,6 +4,19 @@ export default {
   darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     extend: {
+      // Tailwind only generates an opacity modifier (`bg-iris/8`,
+      // `opacity-45`) when the number is in this scale — anything else is
+      // silently dropped, with no build error. The design uses these low tints
+      // throughout, so without them the active transcript line, the search
+      // highlight, the update banner and every disabled button rendered with no
+      // background and no dimming at all.
+      opacity: {
+        6: "0.06",
+        8: "0.08",
+        12: "0.12",
+        16: "0.16",
+        45: "0.45",
+      },
       colors: {
         // Semantic tokens — resolved from CSS variables in src/styles.css.
         bg: "rgb(var(--bg) / <alpha-value>)",
